@@ -94,7 +94,7 @@ class Indi_Trail_Frontend
 					}
                 }
             } else {
-                $section = new Fsection();
+                $section = Indi::model('Fsection');
                 // section id
                 $sectionRow = $section->fetchRow('`alias` = "' . $sectionAlias . '"' . $specialSectionCondition);
                 $sectionId = $sectionRow->id;

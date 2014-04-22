@@ -9,7 +9,7 @@ class Indi_Uri extends Indi_Uri_Base {
         $params = Indi::uri();
 
         $sectionR = Indi::model('Section')->fetchRow('`alias` = "' . $params['section'] . '"');
-        $sectionA = $sectionR->toArray();
+        if ($sectionR) $sectionA = $sectionR->toArray();
         $controllerClassName = ucfirst($params['section']) . 'Controller';
         if (!class_exists($controllerClassName)) {
             $fsectionM = Indi::model('Fsection');
@@ -48,9 +48,7 @@ class Indi_Uri extends Indi_Uri_Base {
         }
 
         $controllerClassName = ucfirst($params['section']) . 'Controller';
-
         if (!class_exists($controllerClassName)) {
-
             $extendClass = 'Project_Controller_Front';
             if ($fsectionA[0]['extends']) $extendClass = implode('_', array($extendClass, $fsectionA[0]['extends']));
             if (!class_exists($extendClass)) $extendClass = preg_replace('/^Project/', 'Indi', $extendClass);

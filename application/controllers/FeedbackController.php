@@ -2,7 +2,7 @@
 class FeedbackController extends Project_Controller_Front{
 	public function addAction(){
 		$json = array();
-		if ($this->post['captcha'] != $_SESSION['captcha']['feedback']) {
+		if (Indi::post()->captcha != $_SESSION['captcha']['feedback']) {
 			$json['errors'][] = 'Вы ввели неправильный проверочный код';
 		} else {
 			$data = $this->post;

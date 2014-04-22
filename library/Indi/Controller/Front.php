@@ -4,48 +4,49 @@ class Indi_Controller_Front extends Indi_Controller{
 	public $datePattern = "/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}$/";
 	public $urlPattern = "/^\b([\d\w\.\/\+\-\?\:]*)((ht|f)tp(s|)\:\/\/|[\d\d\d|\d\d]\.[\d\d\d|\d\d]\.|www\.|\.tv|\.ac|\.com|\.edu|\.gov|\.int|\.mil|\.net|\.org|\.biz|\.info|\.name|\.pro|\.museum|\.co|\.ru)([\d\w\.\/\%\+\-\=\&amp;\?\:\\\&quot;\'\,\|\~\;\b]*)$/";
 	public function preDispatch(){
-	//	parent::preDispatch();
+
+        d(Indi::uri());
+        die('sd');
 		// Для XHR
 		header('Access-Control-Allow-Origin: *');
 
 		// Определяем текущий раздел, ищем его в базе
 		$this->section = Indi::model('Fsection')->fetchRow('`alias` = "' . Indi::uri()->section . '"');
-		$this->view->section = $this->section;
-		if ($this->section->type == 's' && $this->action == 'index') {
-			$this->action = $this->section->index;
-			if (preg_match('/^\$/', $this->section->where)) {
-				eval('$this->identifier = ' . $this->section->where . ';');
+		$this->view->section = Indi::trail()->section;
+		if (Indi::trail()->section->type == 's' && $this->action == 'index') {
+			$this->action = Indi::trail()->section->index;
+			if (preg_match('/^\$/', Indi::trail()->section->where)) {
+				eval('$this->identifier = ' . Indi::trail()->section->where . ';');
 			} else {
-				eval('$where = "' . $this->section->where . '";');
-				$this->identifier = Indi::model($this->section->entityId)->fetchRow($where)->id;
+				eval('$where = "' . Indi::trail()->section->where . '";');
+				$this->identifier = Indi::model(Indi::trail()->section->entityId)->fetchRow($where)->id;
 			}
 		}
 		Indi::registry('request', $this->params);
 		
 		// Определяем текущее действие, ищем его в базе
 		$this->action = Indi::model('Faction')->fetchRow('`alias` = "' . $this->action . '"');
-		if(!Indi::model('Fsection2faction')->fetchRow('`fsectionId` = "' . $this->section->id . '" AND `factionId` = "' . $this->action->id . '"')) {
+		if(!Indi::model('Fsection2faction')->fetchRow('`fsectionId` = "' . Indi::trail()->section->id . '" AND `factionId` = "' . $this->action->id . '"')) {
 			$this->action = null;
 		}
 		$this->view->action = $this->action;
 		
 		// Трейл
-		Indi::trail(true) = new Indi_Trail_Frontend($this->section->alias, $this->identifier, $this->action->alias, null, $this->params);
+		$this->trail = new Indi_Trail_Frontend(Indi::trail()->section->alias, $this->identifier, $this->action->alias, null, $this->params);
 
-		Indi::trail(true) = Indi::trail(true);
 		// Определяем текущее id записи из таблицы fsection2faction, ищем его в базе чтобы по нему вытащить
 		// данные о том, какие  зависимые количества, зависимые множества и записи - соответствующие внешним
 		// ключам, нужно автоматически выташить
-		$this->section2action = Indi::model('Fsection2faction')->fetchRow('`fsectionId` = "' . $this->section->id . '" AND `factionId` = "' . $this->action->id . '"');
+		$this->section2action = Indi::model('Fsection2faction')->fetchRow('`fsectionId` = "' . Indi::trail()->section->id . '" AND `factionId` = "' . $this->action->id . '"');
 		// Для хэлперов seoTitle, seoKeywords и seoDescription
 		$this->view->section2actionId = $this->section2action->id;
 
 		// Если к разделу прикреплена сущность, то назначаем текущаю модель, соответствующую этой сущности
-		if ($this->section->entityId) $this->model = Indi::model(ucfirst($this->section->foreign('entityId')->table));
+		if (Indi::trail()->section->entityId) $this->model = Indi::model(Indi::trail()->section->entityId);
 
 		// Стандартные задачи
 		$this->preMaintenance();
-		$this->maintenance();
+        $this->maintenance();
 
 		$this->view->request = $this->params;
 
@@ -55,8 +56,8 @@ class Indi_Controller_Front extends Indi_Controller{
     }
 	
 	public function postDispatch($die = true){
-		$this->view->section = $this->section;
-		$this->view->indexParams = $_SESSION['indexParams'][$this->section->alias];
+		$this->view->section = Indi::trail()->section;
+		$this->view->indexParams = $_SESSION['indexParams'][Indi::trail()->section->alias];
 		if ($this->section2action->imposition) $this->view->imposition = $this->section2action->imposition;
 		$this->view->rowset = $this->rowset;
 		if($this->action->alias != 'index' && $this->identifier) $this->view->row = Indi::trail()->row;
@@ -84,7 +85,7 @@ class Indi_Controller_Front extends Indi_Controller{
 			$out = $this->view->render('index.php');
 		// Иначе если действие предназначено для обработки XHR, рендерим только вью действия, без хэдэра и футера
 		} else {
-			$out = $this->view->render($this->section->alias . '/' . $this->action->alias . '.php');
+			$out = $this->view->render(Indi::trail()->section->alias . '/' . $this->action->alias . '.php');
 		}
 		if ($GLOBALS['enableSeoUrls'] == 'true') $out = Indi_Uri::sys2seo($out);
 		$out = $this->subdomainMaintenance($out);
@@ -96,25 +97,25 @@ class Indi_Controller_Front extends Indi_Controller{
             $out = preg_replace('/(<img[^>]+)(src)=("|\')\//', '$1$2=$3' . STD . '/', $out);
         }
 		
-		if (isset($this->get['p']))echo mt();
+		if (isset(Indi::get()->p))echo mt();
         if ($die) die($out); else return $out;
 	}
 	public function getOrder($orderById, $dir, $condition = null){
 		if (!$this->masterOrder) {
 			if (!$orderById) return null;
-	//		$this->post['sort'] = 'identifier';
-			$this->post['dir'] = $dir;
+	//		Indi::post()->sort = 'identifier';
+			Indi::post()->dir = $dir;
 			// check if field (that is to be sorted by) store relation
 			$entityId = false;	
 			$orderBy = Indi::model('OrderBy')->fetchRow('`id` = "' . $orderById . '"');
-			if ($orderBy->orderBy == "e") return $orderBy->expression . ' ' . $this->post['dir'];
+			if ($orderBy->orderBy == "e") return $orderBy->expression . ' ' . Indi::post()->dir;
 			$field = $orderBy->foreign('fieldId');
 		} else {
-			if ($this->section->orderBy == 'e') {
-				return $this->section->orderExpression;
+			if (Indi::trail()->section->orderBy == 'e') {
+				return Indi::trail()->section->orderExpression;
 			} else {
-				$field = $this->section->foreign('orderColumn');
-				$this->post['dir'] = $this->section->orderDirection;
+				$field = Indi::trail()->section->foreign('orderColumn');
+				Indi::post()->dir = Indi::trail()->section->orderDirection;
 			}
 		}
 		if($field->relation || $field->satellite) {
@@ -126,7 +127,7 @@ class Indi_Controller_Front extends Indi_Controller{
 		// get distinct entity ids that will be used to initialize models and retrieve rowsets
 		if ($entityId) {
 			// get distinct ids of foreign rows
-			$query = 'SELECT DISTINCT `' . $field->alias . '` AS `id` FROM `' . Indi::model($this->section->entityId)->name() . '` WHERE 1 ' . ($condition ? ' AND ' . $condition : '');
+			$query = 'SELECT DISTINCT `' . $field->alias . '` AS `id` FROM `' . Indi::model(Indi::trail()->section->entityId)->name() . '` WHERE 1 ' . ($condition ? ' AND ' . $condition : '');
 			$result = $this->db->query($query)->fetchAll();
 			if (count($result)) {
 				// get distinct foreign key values, to avoid twice or more calculating title for equal ids
@@ -180,7 +181,7 @@ class Indi_Controller_Front extends Indi_Controller{
 				$this->db->query($query);
 
 				// sort data in temporary table by 'title' field
-				$result = $this->db->query('SELECT `id`,`title` FROM `' . $tmpTable . '` ORDER BY `title` ' . $this->post['dir'])->fetchAll();
+				$result = $this->db->query('SELECT `id`,`title` FROM `' . $tmpTable . '` ORDER BY `title` ' . Indi::post()->dir)->fetchAll();
 
 				$query = 'DROP TABLE `' . $tmpTable . '`;';
 				$this->db->query($query);
@@ -197,7 +198,7 @@ class Indi_Controller_Front extends Indi_Controller{
 			$rowset = Indi::trail()->model->fetchAll('1 ' . ($condition ? ' AND ' . $condition : ''));
 			$tmp = array();
 			foreach ($rowset as $row) {
-				$tmp[] = array('id' => $row->id, 'title' => $row->foreign($this->post['sort'])->title);
+				$tmp[] = array('id' => $row->id, 'title' => $row->foreign(Indi::post()->sort)->title);
 			}
 			if (count($tmp)) {
 				// create temporary table
@@ -218,7 +219,7 @@ class Indi_Controller_Front extends Indi_Controller{
 				$this->db->query($query);
 
 				// sort data in temporary table by 'title' field
-				$result = $this->db->query('SELECT `id`,`title` FROM `' . $tmpTable . '` ORDER BY `title` ' . $this->post['dir'])->fetchAll();
+				$result = $this->db->query('SELECT `id`,`title` FROM `' . $tmpTable . '` ORDER BY `title` ' . Indi::post()->dir)->fetchAll();
 
 				$query = 'DROP TABLE `' . $tmpTable . '`;';
 				$this->db->query($query);
@@ -230,103 +231,103 @@ class Indi_Controller_Front extends Indi_Controller{
 				$order = 'POSITION(CONCAT("\'", `id`, "\'") IN "\'' . implode("','", $ids) . '\'") ASC';
 			}
 		} else {
-			$order = $field->alias . ' ' . $this->post['dir'];
+			$order = $field->alias . ' ' . Indi::post()->dir;
 		}
         $order = trim($order) ? $order : null;
 		return $order;
 	}
 	public function getRowsetParams(){
-		if (isset($this->post['indexPage'])) {
-			$previousPage = $_SESSION['indexParams'][$this->section->alias]['page'];
-			$_SESSION['indexParams'][$this->section->alias]['page'] = (int) $this->post['indexPage'];
+		if (isset(Indi::post()->indexPage)) {
+			$previousPage = $_SESSION['indexParams'][Indi::trail()->section->alias]['page'];
+			$_SESSION['indexParams'][Indi::trail()->section->alias]['page'] = (int) Indi::post()->indexPage;
 			
 		}
-		if (isset($this->post['indexLimit'])) {
-			if ($this->post['indexLimit'] != $_SESSION['indexParams'][$this->section->alias]['limit']) {
-				$_SESSION['indexParams'][$this->section->alias]['page'] = 1;
+		if (isset(Indi::post()->indexLimit)) {
+			if (Indi::post()->indexLimit != $_SESSION['indexParams'][Indi::trail()->section->alias]['limit']) {
+				$_SESSION['indexParams'][Indi::trail()->section->alias]['page'] = 1;
 				$noDirChange = true;
 			}
-			$_SESSION['indexParams'][$this->section->alias]['limit'] = (int) $this->post['indexLimit'];
+			$_SESSION['indexParams'][Indi::trail()->section->alias]['limit'] = (int) Indi::post()->indexLimit;
 		}
 		if ($this->rowsetFilter && is_array($this->rowsetFilter)){
 			foreach ($this->rowsetFilter as $index => $value) {
-//				if (array_key_exists($index, $this->post['indexWhere'])) $this->post['indexWhere'][$index] = $value;
+//				if (array_key_exists($index, Indi::post()->indexWhere)) Indi::post()->indexWhere[$index] = $value;
 			}
 		}
         if (Indi::trail(1)){
             if (Indi::trail()->section->parentSectionConnector) {
                 $parentSectionConnectorAlias = Indi::trail()->section->foreign('parentSectionConnector')->alias;
-                $this->post['indexWhere'][1] = '`' . $parentSectionConnectorAlias . '` = "' . Indi::trail(1)->row->$parentSectionConnectorAlias .'"';
+                Indi::post()->indexWhere[1] = '`' . $parentSectionConnectorAlias . '` = "' . Indi::trail(1)->row->$parentSectionConnectorAlias .'"';
             } else {
                 $alias = Indi::trail(1)->model->name() . 'Id';
                 $fieldR = Indi::model('Field')->fetchRow('`entityId` = "' . Indi::trail()->section->entityId . '" AND `alias` = "' . $alias . '"');
                 if ($fieldR->storeRelationAbility == 'one') {
-                    $this->post['indexWhere'][1] = '`' . $alias . '` = "' . Indi::trail(1)->row->id .'"';
+                    Indi::post()->indexWhere[1] = '`' . $alias . '` = "' . Indi::trail(1)->row->id .'"';
                 } else {
-                    $this->post['indexWhere'][1] = 'FIND_IN_SET("' . Indi::trail(1)->row->id .'", `' . $alias . '`)';
+                    Indi::post()->indexWhere[1] = 'FIND_IN_SET("' . Indi::trail(1)->row->id .'", `' . $alias . '`)';
                 }
             }
         }
-		if ($this->section->filter) {
-            Indi::$cmpTpl = $this->section->filter; eval(Indi::$cmpRun); $this->section->filter = Indi::$cmpOut;
-			$this->post['indexWhere'][2] = $this->section->filter;
+		if (Indi::trail()->section->filter) {
+            Indi::$cmpTpl = Indi::trail()->section->filter; eval(Indi::$cmpRun); Indi::trail()->section->filter = Indi::$cmpOut;
+			Indi::post()->indexWhere[2] = Indi::trail()->section->filter;
 		}
-		if (isset($this->post['indexWhere'])){
-			foreach ($this->post['indexWhere'] as $filterParam => $requiredValue) {
+		if (isset(Indi::post()->indexWhere)){
+			foreach (Indi::post()->indexWhere as $filterParam => $requiredValue) {
 				if (!$requiredValue) {
-					unset($_SESSION['indexParams'][$this->section->alias]['where'][$filterParam]);
+					unset($_SESSION['indexParams'][Indi::trail()->section->alias]['where'][$filterParam]);
 				} else {
-					if ($_SESSION['indexParams'][$this->section->alias]['where'][$filterParam] != $requiredValue) {
-						$_SESSION['indexParams'][$this->section->alias]['page'] = 1;
+					if ($_SESSION['indexParams'][Indi::trail()->section->alias]['where'][$filterParam] != $requiredValue) {
+						$_SESSION['indexParams'][Indi::trail()->section->alias]['page'] = 1;
 					}
-					$_SESSION['indexParams'][$this->section->alias]['where'][$filterParam] = $requiredValue;
+					$_SESSION['indexParams'][Indi::trail()->section->alias]['where'][$filterParam] = $requiredValue;
 				}
 			}
 		}
-		if (isset($this->post['indexOrder'])) {
-			if (!isset($_SESSION['indexParams'][$this->section->alias]['order'])){
-				$_SESSION['indexParams'][$this->section->alias]['dir'] = $this->section->orderBy == 'c' ? $this->section->orderDirection : 'ASC';
-			} else if ($_SESSION['indexParams'][$this->section->alias]['order'] == $this->post['indexOrder'] && $previousPage == $this->post['indexPage']) {
-				if (isset($this->post['indexDir'])) {
-					$_SESSION['indexParams'][$this->section->alias]['dir'] = in_array($this->post['indexDir'], array('DESC', 'ASC')) ? $this->post['indexDir'] : 'ASC';
+		if (isset(Indi::post()->indexOrder)) {
+			if (!isset($_SESSION['indexParams'][Indi::trail()->section->alias]['order'])){
+				$_SESSION['indexParams'][Indi::trail()->section->alias]['dir'] = Indi::trail()->section->orderBy == 'c' ? Indi::trail()->section->orderDirection : 'ASC';
+			} else if ($_SESSION['indexParams'][Indi::trail()->section->alias]['order'] == Indi::post()->indexOrder && $previousPage == Indi::post()->indexPage) {
+				if (isset(Indi::post()->indexDir)) {
+					$_SESSION['indexParams'][Indi::trail()->section->alias]['dir'] = in_array(Indi::post()->indexDir, array('DESC', 'ASC')) ? Indi::post()->indexDir : 'ASC';
 				} else {
-					$_SESSION['indexParams'][$this->section->alias]['dir'] = $_SESSION['indexParams'][$this->section->alias]['dir'] == 'ASC' ? ($noDirChange ? 'ASC' : 'DESC') : ($noDirChange ? 'DESC' : 'ASC');
+					$_SESSION['indexParams'][Indi::trail()->section->alias]['dir'] = $_SESSION['indexParams'][Indi::trail()->section->alias]['dir'] == 'ASC' ? ($noDirChange ? 'ASC' : 'DESC') : ($noDirChange ? 'DESC' : 'ASC');
 				}
 			}
-			$_SESSION['indexParams'][$this->section->alias]['order'] = (int) $this->post['indexOrder'];
+			$_SESSION['indexParams'][Indi::trail()->section->alias]['order'] = (int) Indi::post()->indexOrder;
 		} else {
-			if ($this->section->orderBy == 'c') {
-				$_SESSION['indexParams'][$this->section->alias]['order'] = Indi::model('OrderBy')->fetchRow('`fsectionId` = "' . $this->section->id . '" AND `fieldId` = "' . $this->section->orderColumn . '"')->id;
-				$_SESSION['indexParams'][$this->section->alias]['dir'] = $this->section->orderDirection;
+			if (Indi::trail()->section->orderBy == 'c') {
+				$_SESSION['indexParams'][Indi::trail()->section->alias]['order'] = Indi::model('OrderBy')->fetchRow('`fsectionId` = "' . Indi::trail()->section->id . '" AND `fieldId` = "' . Indi::trail()->section->orderColumn . '"')->id;
+				$_SESSION['indexParams'][Indi::trail()->section->alias]['dir'] = Indi::trail()->section->orderDirection;
 			} else {
-				$_SESSION['indexParams'][$this->section->alias]['order'] = $this->section->orderExpression;
-				if (stripos($this->section->orderExpression, 'asc') === false && stripos($this->section->orderExpression, 'desc') === false) {
-					$_SESSION['indexParams'][$this->section->alias]['dir'] = 'ASC';
+				$_SESSION['indexParams'][Indi::trail()->section->alias]['order'] = Indi::trail()->section->orderExpression;
+				if (stripos(Indi::trail()->section->orderExpression, 'asc') === false && stripos(Indi::trail()->section->orderExpression, 'desc') === false) {
+					$_SESSION['indexParams'][Indi::trail()->section->alias]['dir'] = 'ASC';
 				}
 			}
 		}
-		if (!$_SESSION['indexParams'][$this->section->alias]['page']) $_SESSION['indexParams'][$this->section->alias]['page'] = 1;
-		if (!$_SESSION['indexParams'][$this->section->alias]['limit']) $_SESSION['indexParams'][$this->section->alias]['limit'] = $this->section->defaultLimit;
-		if (!$_SESSION['indexParams'][$this->section->alias]['where']) $_SESSION['indexParams'][$this->section->alias]['where'] = null;
-		if (!$_SESSION['indexParams'][$this->section->alias]['order']) {
-			if ($this->section->orderBy == 'e' || $this->section->orderColumn) {
+		if (!$_SESSION['indexParams'][Indi::trail()->section->alias]['page']) $_SESSION['indexParams'][Indi::trail()->section->alias]['page'] = 1;
+		if (!$_SESSION['indexParams'][Indi::trail()->section->alias]['limit']) $_SESSION['indexParams'][Indi::trail()->section->alias]['limit'] = Indi::trail()->section->defaultLimit;
+		if (!$_SESSION['indexParams'][Indi::trail()->section->alias]['where']) $_SESSION['indexParams'][Indi::trail()->section->alias]['where'] = null;
+		if (!$_SESSION['indexParams'][Indi::trail()->section->alias]['order']) {
+			if (Indi::trail()->section->orderBy == 'e' || Indi::trail()->section->orderColumn) {
 				$this->masterOrder = true;
 			} else {
-				$_SESSION['indexParams'][$this->section->alias]['order'] = key($this->section->getOrder());
+				$_SESSION['indexParams'][Indi::trail()->section->alias]['order'] = key(Indi::trail()->section->getOrder());
 			}
 		}
-        if ($this->section->orderBy == 'e' || $this->section->orderColumn) {
+        if (Indi::trail()->section->orderBy == 'e' || Indi::trail()->section->orderColumn) {
             $this->masterOrder = true;
         }
 		$where = null;
-		if (is_array($_SESSION['indexParams'][$this->section->alias]['where'])) {
-			foreach ($_SESSION['indexParams'][$this->section->alias]['where'] as $filterParam => $requiredValue) {
+		if (is_array($_SESSION['indexParams'][Indi::trail()->section->alias]['where'])) {
+			foreach ($_SESSION['indexParams'][Indi::trail()->section->alias]['where'] as $filterParam => $requiredValue) {
 				if ((int)$filterParam == $filterParam) {
 					$where[] = $requiredValue;
 				} else {
-					if (strpos($filterParam, 'From') && $this->section->getFilter(str_replace('From', '', $filterParam))->type == 'b'){
+					if (strpos($filterParam, 'From') && Indi::trail()->section->getFilter(str_replace('From', '', $filterParam))->type == 'b'){
 						$where[] = '`' . str_replace('From', '', $filterParam) . '` >= "' . $requiredValue . '"';
-					} else if (strpos($filterParam, 'To') && $this->section->getFilter(str_replace('To', '', $filterParam))->type == 'b') {
+					} else if (strpos($filterParam, 'To') && Indi::trail()->section->getFilter(str_replace('To', '', $filterParam))->type == 'b') {
 						$where[] = '`' . str_replace('To', '', $filterParam) . '` <= "' . $requiredValue . '"';
 					} else {
 						$findInSet = false;
@@ -346,20 +347,24 @@ class Indi_Controller_Front extends Indi_Controller{
 			}
 			if (is_array($where)) $where = implode(' AND ', $where);
 		}
-		$page = $_SESSION['indexParams'][$this->section->alias]['page'];
-		$limit = $_SESSION['indexParams'][$this->section->alias]['limit'];
-		$order = $_SESSION['indexParams'][$this->section->alias]['order'];
-		$dir = $_SESSION['indexParams'][$this->section->alias]['dir'];
+		$page = $_SESSION['indexParams'][Indi::trail()->section->alias]['page'];
+		$limit = $_SESSION['indexParams'][Indi::trail()->section->alias]['limit'];
+		$order = $_SESSION['indexParams'][Indi::trail()->section->alias]['order'];
+		$dir = $_SESSION['indexParams'][Indi::trail()->section->alias]['dir'];
 		return array('page' => $page, 'limit' => $limit, 'order' => $order, 'where' => $where, 'dir' => $dir);
 	}
 	public function maintenance(){
+
 		// Выдергивание независимых множеств
 		$this->setIndependentRowsets();
-		if (is_object($this->model) && get_class($this->model) != 'stdClass' && !$this->noMaintenance) {
-			if ($this->action->maintenance == 'rs') {
-	//		if ($this->model && $this->section->type == 'r' && $this->action->alias == 'index') {
+
+        if (is_object($this->model) && get_class($this->model) != 'stdClass' && !$this->noMaintenance) {
+            if ($this->action->maintenance == 'rs') {
+	//		if ($this->model && Indi::trail()->section->type == 'r' && $this->action->alias == 'index') {
 				// get rowset params and get rowset according to them
-				$rp = $this->getRowsetParams();
+
+                $rp = $this->getRowsetParams();
+                die('ss');
 				if ($tree = $this->model->treeColumn()) {
 					$this->rowset = $this->model->fetchTree($rp['where'], trim($this->getOrder($rp['order'], $rp['dir'])));
 				} else {
@@ -379,7 +384,7 @@ class Indi_Controller_Front extends Indi_Controller{
 
 				// set join needed foreign rows on foreign keys
 				$info = $this->section2action->getInfoAboutForeignRowsToBeGot();
-				if ($info->count()) $this->rowset->setForeignRowsByForeignKeys($info);
+				if ($info->count()) $this->rowset->foreign($info);
 //			} else if ($this->model && $this->identifier) {
 			} else if ($this->action->maintenance == 'r') {
 				//get row
@@ -403,9 +408,9 @@ class Indi_Controller_Front extends Indi_Controller{
 				}
 			}
 		}
-		if ($this->section->type == 's') {
-			$this->{$this->section->index . 'Action()'};
-			eval('$this->' . $this->section->index . 'Action();');
+		if (Indi::trail()->section->type == 's') {
+			$this->{Indi::trail()->section->index . 'Action()'};
+			eval('$this->' . Indi::trail()->section->index . 'Action();');
 		}
 	}
 	public function setIndependentRowsets(){
@@ -437,12 +442,12 @@ class Indi_Controller_Front extends Indi_Controller{
 				}
 
 				$limit = $entity->limit ? $entity->limit : null;
-				$page = $_SESSION['rowsetParams'][$this->section->alias][$this->action->alias]['independent'][$entity->alias]['page'];if (!$page) $page = 1;
+				$page = $_SESSION['rowsetParams'][Indi::trail()->section->alias][$this->action->alias]['independent'][$entity->alias]['page'];if (!$page) $page = 1;
 				
 				$rowset = Indi::model($entity->entityId)->fetchAll($where, $order ? $order : null, $limit, $page, $calc);
 				$joins = $join->fetchAll('`independentRowsetId` = "' . $entity->id . '"');
 				if ($joins->count()) {
-					$rowset->setForeignRowsByForeignKeys($joins);
+					$rowset->foreign($joins);
 				}
 				$independentRowsets[$entity->alias] = $entity->returnAs == 'o' ? $rowset : $rowset->toArray();
 			}
@@ -454,7 +459,7 @@ class Indi_Controller_Front extends Indi_Controller{
 	public function preMaintenance(){
 	}
 	public function rowsetParams(){
-		$_SESSION['rowsetParams'][$this->section->alias][$this->action->alias]['independent'][$this->post['rowsetAlias']]['page'] = $this->post['page'];
+		$_SESSION['rowsetParams'][Indi::trail()->section->alias][$this->action->alias]['independent'][Indi::post()->rowsetAlias]['page'] = Indi::post()->page;
 		die();
 	}
 	public function subdomainMaintenance($html){

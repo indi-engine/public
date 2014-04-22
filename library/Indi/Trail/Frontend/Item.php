@@ -75,10 +75,10 @@ class Indi_Trail_Frontend_Item
     public function __construct($sectionId, $rowIdentifier, $actionAlias, &$trail)
     {
         // set up section row
-        $section = new Fsection();
-        $this->section = $section->fetchRow('`id` = "' . $sectionId . '"');
+        $section = Indi::model('Fsection');
+        Indi::trail()->section = $section->fetchRow('`id` = "' . $sectionId . '"');
         
-        if ($this->section) {
+        if (Indi::trail()->section) {
             // set up actions of section
 			$fsection2factions = Indi::model('Fsection2faction')->fetchAll('`fsectionId` = "' . $sectionId . '"');
 			foreach ($fsection2factions as $fsection2faction) $ids[] = $fsection2faction->factionId; $ids = implode('","', $ids);
@@ -87,13 +87,13 @@ class Indi_Trail_Frontend_Item
             // set up subsections of section
             $this->sections = Indi::model('Fsection')->fetchAll('`fsectionId` = "' . $sectionId . '"');
         }
-        if ($this->section) {
+        if (Indi::trail()->section) {
             // set up action row
-            $action = new Faction();
+            $action = Indi::model('Faction');
             $this->action = $action->fetchRow('`alias` = "' . $actionAlias . '"');
 
             // set up row
-            $entityTitle = $this->section->foreign('entityId')->table;
+            $entityTitle = Indi::trail()->model->name();
             if ($entityTitle) {
 
 				// set up model
@@ -104,8 +104,8 @@ class Indi_Trail_Frontend_Item
                 // set up row
                 if ($rowIdentifier) {
                     $this->row = $this->model->fetchRow('`id` = "' . $rowIdentifier . '"');
-                    if ($this->row && $this->section->fsectionId) {
-                        $parentSection = $this->section->foreign('fsectionId');
+                    if ($this->row && Indi::trail()->section->fsectionId) {
+                        $parentSection = Indi::trail()->section->foreign('fsectionId');
                         $parentEntity = $parentSection->foreign('entityId');
                         $parentEntityForeignKeyName = $parentEntity->table . 'Id';
                         if (!in_array($parentEntityForeignKeyName, array_keys($this->row->toArray()))) {
@@ -118,7 +118,7 @@ class Indi_Trail_Frontend_Item
                     // set up empty row if no row identifier
                     $this->row = $this->model->createRow();
 
-                    if ($parentSection = $this->section->foreign('fsectionId'))
+                    if ($parentSection = Indi::trail()->section->foreign('fsectionId'))
 					do{
 						// determining parent key name
 						$parentSectionId = $parentSection->id;
@@ -132,9 +132,7 @@ class Indi_Trail_Frontend_Item
                     } while($parentSection = $parentSection->foreign('fsectionId'));
 
                 }
-				// set up row fields
-				$field = new Field();
-				$this->fields = $this->model()->fields();
+				$this->fields = $this->model->fields();
             }
         }
     }
@@ -147,7 +145,7 @@ class Indi_Trail_Frontend_Item
     public function toArray()
     {
         $array = array();
-        if ($this->section) $array['section'] = $this->section->toArray();
+        if (Indi::trail()->section) $array['section'] = Indi::trail()->section->toArray();
         if ($this->action) $array['action'] = $this->action->toArray();
         if ($this->actions) $array['actions'] = $this->actions->toArray();
         if ($this->row) $array['row'] = $this->row->toArray();

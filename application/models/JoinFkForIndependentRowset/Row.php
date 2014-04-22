@@ -1,0 +1,1 @@
+<?phpclass JoinFkForIndependentRowset_Row extends Indi_Db_Table_Row{    public function save(){        $this->title = $this->foreign('entityId')->title;        parent::save();    }}

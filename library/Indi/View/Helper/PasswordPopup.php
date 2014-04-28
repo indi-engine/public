@@ -1,11 +1,11 @@
 <?php
 class Indi_View_Helper_PasswordPopup extends Indi_View_Helper_Abstract{
 	public function passwordPopup(){
-		if ($this->view->post['changePassword']) {
-			$error =  $this->view->error;
+		if (Indi::view()->post['changePassword']) {
+			$error =  Indi::view()->error;
 			$field = @key($error);
-			$post = $this->view->post;
-			$result = $this->view->result;
+			$post = Indi::view()->post;
+			$result = Indi::view()->result;
 		}
 		ob_start();?>
 <script>
@@ -18,7 +18,7 @@ $(document).ready(function(){
 });
 </script>
   <div id="change-password" class="change-password-modal modal-window"<?=$result?' style="display: none;"':''?>>
-    <a href="#" class="close-modal"><img src="/i<?=$this->view->imposition?>/close.png" onclick=""/></a>
+    <a href="#" class="close-modal"><img src="/i<?=Indi::view()->imposition?>/close.png" onclick=""/></a>
     <form action="" method="post" id="passwordForm">
       <h3 class="modal-title">Смена пароля<br/><a href="/myprofile/"><?=$_SESSION['nick']?></a></h3>
       <div id="edit-current-password-wrapper" class="form-item<?=$field == 'currentPassword' ? ' error' : ''?>">

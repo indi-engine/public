@@ -1,11 +1,11 @@
 <?php
 class Indi_View_Helper_RecoveryPopup extends Indi_View_Helper_Abstract{
 	public function recoveryPopup(){
-		if ($this->view->post['recovery']) {
-			$error =  $this->view->error;
+		if (Indi::view()->post['recovery']) {
+			$error =  Indi::view()->error;
 			$field = @key($error);
-			$post = $this->view->post;
-			$result = $this->view->result;
+			$post = Indi::view()->post;
+			$result = Indi::view()->result;
 		}
 		$xhtml = '
   <div id="precovery" class="modal-window password-recovery">

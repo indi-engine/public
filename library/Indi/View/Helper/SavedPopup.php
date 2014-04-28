@@ -1,7 +1,7 @@
 <?php
 class Indi_View_Helper_SavedPopup extends Indi_View_Helper_Abstract{
 	public function savedPopup(){
-		if ($this->view->saved) {
+		if (Indi::view()->saved) {
 			ob_start();?>
 			<script>
 			$(document).ready(function(){

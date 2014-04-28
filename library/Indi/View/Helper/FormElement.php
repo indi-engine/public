@@ -118,8 +118,8 @@ abstract class Indi_View_Helper_FormElement extends Indi_View_Helper_HtmlElement
     protected function _hidden($name, $value = null, $attribs = null)
     {
         return '<input type="hidden"'
-             . ' name="' . $this->view->escape($name) . '"'
-             . ' value="' . $this->view->escape($value) . '"'
+             . ' name="' . Indi::view()->escape($name) . '"'
+             . ' value="' . Indi::view()->escape($value) . '"'
              . $this->_htmlAttribs($attribs) . $this->getClosingBracket();
     }
 }

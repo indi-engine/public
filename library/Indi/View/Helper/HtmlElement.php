@@ -71,7 +71,7 @@ abstract class Indi_View_Helper_HtmlElement extends Indi_View_Helper_Abstract
      */
     protected function _isXhtml()
     {
-        $doctype = $this->view->doctype();
+        $doctype = Indi::view()->doctype();
         return $doctype->isXhtml();
     }
 
@@ -89,7 +89,7 @@ abstract class Indi_View_Helper_HtmlElement extends Indi_View_Helper_Abstract
     {
         $xhtml = '';
         foreach ((array) $attribs as $key => $val) {
-            $key = $this->view->escape($key);
+            $key = Indi::view()->escape($key);
 
             if (('on' == substr($key, 0, 2)) || ('constraints' == $key)) {
                 // Don't escape event attributes; _do_ substitute double quotes with singles
@@ -103,7 +103,7 @@ abstract class Indi_View_Helper_HtmlElement extends Indi_View_Helper_Abstract
                 if (is_array($val)) {
                     $val = implode(' ', $val);
                 }
-                $val = $this->view->escape($val);
+                $val = Indi::view()->escape($val);
             }
 
             if ('id' == $key) {

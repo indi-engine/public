@@ -3,14 +3,14 @@ class Indi_View_Helper_SeoTDK extends Indi_View_Helper_Abstract{
 	public $title = array();
     public static $exclusion = null;
 	public function seoTDK($what = 'title'){
-		$this->rowBackup = $this->view->row;
-		if ($this->view->row) {
+		$this->rowBackup = Indi::view()->row;
+		if (Indi::view()->row) {
             if (Indi::trail()->section->entityId) {
                 if (is_object($this->exclusion)) {
                     return $this->exclusion->{'seo' . ucfirst($what)};
                 } else if ($this->exclusion === null){
                     $exclusionM = Indi::model('metaExclusion');
-                    if ($this->exclusion = $exclusionM->fetchRow('`entityId`="' . Indi::trail()->section->entityId . '" AND `identifier` = "' . $this->view->row->id . '" AND `toggle` = "y"')){
+                    if ($this->exclusion = $exclusionM->fetchRow('`entityId`="' . Indi::trail()->section->entityId . '" AND `identifier` = "' . Indi::view()->row->id . '" AND `toggle` = "y"')){
                         return $this->exclusion->{'seo' . ucfirst($what)};
                     } else {
                         $this->exclusion = false;
@@ -18,10 +18,10 @@ class Indi_View_Helper_SeoTDK extends Indi_View_Helper_Abstract{
                 }
             }
             $title = array();
-            if ($this->view->row->useSystemSeoSolution == 'n') {
-				return $this->view->row->{'seo' . ucfirst($what)};
+            if (Indi::view()->row->useSystemSeoSolution == 'n') {
+				return Indi::view()->row->{'seo' . ucfirst($what)};
 			} else {
-				$parts = Indi::model('Seo'. ucfirst($what))->fetchAll('`fsection2factionId`="' . $this->view->section2actionId . '"', '`move`');
+				$parts = Indi::model('Seo'. ucfirst($what))->fetchAll('`fsection2factionId`="' . Indi::view()->section2actionId . '"', '`move`');
 				$parts->foreign('fieldId,sibling');
 				$this->title = array();
 				static $siblingRow;
@@ -34,15 +34,15 @@ class Indi_View_Helper_SeoTDK extends Indi_View_Helper_Abstract{
 							$title[] = $part->prefix . Indi::trail($part->level)->section->title . $part->postfix;
 						} else {
 							if (!$part->stepsUp) $part->stepsUp = 0;
-							$this->view->row = Indi::trail($part->stepsUp)->row;
+							Indi::view()->row = Indi::trail($part->stepsUp)->row;
 							if ($part->where == 'c') {
 								if (Indi::trail($part->stepsUp)->section->entityId == $part->entityId) {
 									if ($part->foreign['fieldId']['relation']) {
-										$title[] = $part->prefix . $this->view->row->foreign($part->foreign['fieldId']['alias'])->title . $part->postfix;
+										$title[] = $part->prefix . Indi::view()->row->foreign($part->foreign['fieldId']['alias'])->title . $part->postfix;
 									} else {
-										$title[] = $part->prefix . $this->view->row->{$part->foreign['fieldId']['alias']} . $part->postfix;
+										$title[] = $part->prefix . Indi::view()->row->{$part->foreign['fieldId']['alias']} . $part->postfix;
 									}
-									$siblingRow[Indi::trail()->model->name() . 'Id'] = $this->view->row;
+									$siblingRow[Indi::trail()->model->name() . 'Id'] = Indi::view()->row;
 								} else if ($part->entityId == '101') {
 									if ($part->foreign['fieldId']['relation']) {
 										$title[] = $part->prefix . Indi::trail($part->stepsUp)->section->foreign($part->foreign['fieldId']['alias'])->title . $part->postfix;
@@ -52,7 +52,7 @@ class Indi_View_Helper_SeoTDK extends Indi_View_Helper_Abstract{
                                 } else {
 									$model = Indi::model($part->entityId);
 									$pkn = $model->name() . 'Id';
-									$pkv = $this->view->row->$pkn;
+									$pkv = Indi::view()->row->$pkn;
 									if (!$siblingRow[$pkn]) {
 										$row = $model->fetchRow('`id` = "' . $pkv . '"');
 										$siblingRow[$pkn] = $row;
@@ -99,11 +99,11 @@ class Indi_View_Helper_SeoTDK extends Indi_View_Helper_Abstract{
 			$this->constructSeoForRowsetActions($what, 0);
 			$xhtml = implode(' ', $this->title);
 		}
-		$this->view->row = $this->rowBackup;
+		Indi::view()->row = $this->rowBackup;
 		return str_replace('<br>', ' ', $xhtml);
 	}
 	function constructSeoForRowsetActions($what, $parentId = 0){
-		$parts = Indi::model('Seo'. ucfirst($what))->fetchAll('`seo'. ucfirst($what) . 'Id` = "' . $parentId . '" AND `fsection2factionId`="' . $this->view->section2actionId . '"', '`move`');
+		$parts = Indi::model('Seo'. ucfirst($what))->fetchAll('`seo'. ucfirst($what) . 'Id` = "' . $parentId . '" AND `fsection2factionId`="' . Indi::view()->section2actionId . '"', '`move`');
 		$parts->foreign('fieldId,sibling');
 		static $siblingRow;
 		if (!is_array($siblingRow)) $siblingRow = array();

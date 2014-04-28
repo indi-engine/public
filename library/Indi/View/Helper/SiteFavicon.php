@@ -1,7 +1,7 @@
 <?php
 class Indi_View_Helper_SiteFavicon extends Indi_View_Helper_Abstract{
     public function siteFavicon(){
-        $faviconR = $this->view->blocks['favicon-path'];
+        $faviconR = Indi::view()->blocks['favicon-path'];
         $faviconA = $_SERVER['DOCUMENT_ROOT'] . $faviconR;
         if (preg_match('/\.ico$/', $faviconR) && file_exists($faviconA)){
             $nocache = '?' . filemtime($faviconA);

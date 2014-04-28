@@ -1,10 +1,10 @@
 <?php
 class Indi_View_Helper_UserLogin extends Indi_View_Helper_Abstract{
 	public function userLogin(){
-		if ($this->view->post['login']) {
-			$error =  $this->view->error;
+		if (Indi::view()->post['login']) {
+			$error =  Indi::view()->error;
 			$field = @key($error);
-			$post = $this->view->post;
+			$post = Indi::view()->post;
 		}
 		$xhtml = '
     <div class="modal-content">

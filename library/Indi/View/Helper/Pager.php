@@ -16,9 +16,9 @@ class Indi_View_Helper_Pager extends Indi_View_Helper_Abstract
      */
     public function pager($found = null, $limit = null, $pageNumber = null, $display = 5, $js = '$(\'#indexParams\').submit();return false;', $style = '')
     {
-        $found  = $found ? $found : $this->view->rowset->found();
-        $limit      = $limit ? $limit : $this->view->indexParams['limit'];
-        $pageNumber = $pageNumber ? $pageNumber : $this->view->indexParams['page'];
+        $found  = $found ? $found : Indi::view()->rowset->found();
+        $limit      = $limit ? $limit : Indi::view()->indexParams['limit'];
+        $pageNumber = $pageNumber ? $pageNumber : Indi::view()->indexParams['page'];
 		$this->currentPage = $pageNumber;
 
         $this->pageNumber = $pageNumber;
@@ -102,7 +102,7 @@ class Indi_View_Helper_Pager extends Indi_View_Helper_Abstract
     {
         $url = array();
         
-        foreach ($this->view->params as $param => $value) {
+        foreach (Indi::view()->params as $param => $value) {
             switch ($param) {
                 case 'module':
                     $value == 'default' ? print_r('') : ($url[] = $value);
@@ -124,7 +124,7 @@ class Indi_View_Helper_Pager extends Indi_View_Helper_Abstract
             }
         }
         // if 'page' is not in request parameters
-        if (!in_array('page', array_keys($this->view->params))) {
+        if (!in_array('page', array_keys(Indi::view()->params))) {
             $url[] = 'page';
             $url[] = $pageNumber;
         }

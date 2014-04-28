@@ -20,9 +20,9 @@ class Indi_View_Helper_Pager2 extends Indi_View_Helper_Abstract
     {
 		$this->rowsetAlias = $rowsetAlias;
 		$display = 5;
-        $found  = $found ? $found : $this->view->independentRowsets[$rowsetAlias]->found();
+        $found  = $found ? $found : Indi::view()->independentRowsets[$rowsetAlias]->found();
         $limit      = $limit ? $limit : 10;
-        $pageNumber = $pageNumber ? $pageNumber : $_SESSION['rowsetParams'][$this->view->section->alias][$this->view->action->alias]['independent'][$rowsetAlias]['page'];
+        $pageNumber = $pageNumber ? $pageNumber : $_SESSION['rowsetParams'][Indi::view()->section->alias][Indi::view()->action->alias]['independent'][$rowsetAlias]['page'];
 		if (!$pageNumber) $pageNumber = 1;
 		$this->currentPage = $pageNumber;
         

@@ -1,11 +1,11 @@
 <?php
 class Indi_View_Helper_UserRegister extends Indi_View_Helper_Abstract{
 	public function userRegister(){
-		if ($this->view->post['register']) {
-			$error =  $this->view->error;
+		if (Indi::view()->post['register']) {
+			$error =  Indi::view()->error;
 			$field = @key($error);
-			$post = $this->view->post;
-			$result = $this->view->result;
+			$post = Indi::view()->post;
+			$result = Indi::view()->result;
 		}
 		$xhtml = '
     <form action="" method="post">

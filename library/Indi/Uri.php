@@ -1,43 +1,75 @@
 <?php
 class Indi_Uri extends Indi_Uri_Base {
+
+    /**
+     * Array of additional WHERE clauses for static pages fetch
+     *
+     * @var array
+     */
     public $staticpageAdditionalWHERE = array();
 
-    public function dispatch($params = array()){
+    /**
+     * Dispatch the uri
+     */
+    public function dispatch(){
 
+        // Do pre-dispatch operations
         $this->preDispatch();
 
-        $params = Indi::uri();
+        // Build the controller class name
+        $controllerClass = ucfirst(Indi::uri('section')) . 'Controller';
 
-        $sectionR = Indi::model('Section')->fetchRow('`alias` = "' . $params['section'] . '"');
-        if ($sectionR) $sectionA = $sectionR->toArray();
-        $controllerClassName = ucfirst($params['section']) . 'Controller';
-        if (!class_exists($controllerClassName)) {
-            $fsectionM = Indi::model('Fsection');
-            $fsectionA = $fsectionM->fetchAll('`alias` IN ("' . $params['section'] . '", "static")', 'FIND_IN_SET(`alias`, "' . $params['section'] . ',static")')->toArray();
-            if ($fsectionA[0]['alias'] == 'static') {
+        // If there is no such a controller
+        if (!class_exists($controllerClass)) {
+
+            // Get the Fsection_Row object, related either to appropriate frontend section, or 'static'
+            // frontend section, which will be used in case if appropriate section won't be found
+            $fsectionR = Indi::model('Fsection')->fetchRow(
+                '`alias` IN ("' . Indi::uri('section') . '", "static")',
+                'FIND_IN_SET(`alias`, "' . Indi::uri('section') . ',static")'
+            );
+
+            // If found Fsection_Row represents 'static' frontend section
+            if ($fsectionR->alias == 'static') {
+
+                // Build the array of WHERE clauses, for try to find a appropriate static page
                 $where = array_merge(
-                    array('`alias` IN ("' . $params['section'] . '", "404")', '`toggle` = "y"'),
+                    array('`alias` IN ("' . Indi::uri('section') . '", "404")', '`toggle` = "y"'),
                     $this->staticpageAdditionalWHERE
                 );
-                $staticA = Indi::model('Staticpage')->fetchAll($where, 'FIND_IN_SET(`alias`, "' . $params['section'] . ',404")')->toArray();
-                $params['section'] = 'static';
-                $params['action'] = 'details';
-                $params['id'] = $staticA[0]['id'];
-                if ($staticA[0]['alias'] == '404') {
-                    $notFound = true;
-                }
-            } else if (!Indi::model('Faction')->fetchRow('`alias` IN ("' . str_replace('"', '\"', $params['action']) . '")')) {
+
+                // Get the Staticpage_Row object, related either to appropriate static page, or '404'
+                // static page, which will be used in case if appropriate static page won't be found
+                $staticpageR = Indi::model('Staticpage')->fetchRow($where, 'FIND_IN_SET(`alias`, "' . Indi::uri('section') . ',404")');
+
+                // Setup new uri params
+                Indi::uri()->section = 'static';
+                Indi::uri()->action = 'details';
+                Indi::uri()->id = $staticpageR->id;
+
+                // If static page is '404' setup $notFound flag as boolean true
+                if ($staticpageR->alias == '404') $notFound = true;
+
+            // Else if found Fsection_Row represents some another frontend section, but the action, specified within
+            // the uri - is not a one of actions, that are allowed for use in frontend
+            } else if (!Indi::model('Faction')->fetchRow('`alias` = "' . Indi::uri('action') . '"')) {
+
+                // Build the array of WHERE clauses, for try to find a appropriate '404' static page
                 $where = array_merge(
-                    array('`alias` IN ("404")', '`toggle` = "y"'),
+                    array('`alias` = "404"', '`toggle` = "y"'),
                     $this->staticpageAdditionalWHERE
                 );
-                $staticA = Indi::model('Staticpage')->fetchAll($where, 'FIND_IN_SET(`alias`, "404")')->toArray();
-                $params['section'] = 'static';
-                $params['action'] = 'details';
-                $params['id'] = $staticA[0]['id'];
-                if ($staticA[0]['alias'] == '404') {
-                    $notFound = true;
-                }
+
+                // Get the Staticpage_Row object, related either to appropriate '404' static page
+                $staticpageR = Indi::model('Staticpage')->fetchRow($where);
+
+                // Setup new uri params
+                Indi::uri()->section = 'static';
+                Indi::uri()->action = 'details';
+                Indi::uri()->id = $staticpageR->id;
+
+                // Setup $notFound flag as boolean true
+                $notFound = true;
             }
         }
 
@@ -47,15 +79,39 @@ class Indi_Uri extends Indi_Uri_Base {
             $this->trailingSlash();
         }
 
-        $controllerClassName = ucfirst($params['section']) . 'Controller';
-        if (!class_exists($controllerClassName)) {
-            $extendClass = 'Project_Controller_Front';
-            if ($fsectionA[0]['extends']) $extendClass = implode('_', array($extendClass, $fsectionA[0]['extends']));
-            if (!class_exists($extendClass)) $extendClass = preg_replace('/^Project/', 'Indi', $extendClass);
-            eval('class ' . ucfirst($controllerClassName) . ' extends ' . $extendClass . '{}');
+        // Build the controller class name
+        $controllerClass = ucfirst(Indi::uri('section')) . 'Controller';
+
+        // If there is no such a controller
+        if (!class_exists($controllerClass)) {
+
+            // Setup the default parent class for controller auto-creation
+            $controllerParentClass = 'Project_Controller_Front';
+
+            // If controller parent class does not exist - switch $controllerParentClass to 'Indi_Controller_Front'
+            if (!class_exists($controllerParentClass)) $controllerParentClass = 'Indi_Controller_Front';
+
+            // If parent class is explicitly specified as one of frontend section's property -
+            // adjust controller parent class name by appending that property's value to
+            // current value of $controllerParentClass, as system assume that `extends` property
+            // contains controller parent class name specification, relative to current
+            // $controllerParentClass value
+            if ($fsectionR->extends) $controllerParentClass .= '_' . $fsectionR->extends;
+
+            // If controller parent class does not exist
+            if (!class_exists($controllerParentClass))
+
+                // Stop and give an error
+                die(sprintf(I_FSECTION_PARENT_CLASS_NOT_EXISTS, $controllerParentClass, $controllerClass));
+
+            // Auto-declare the controller class using php 'eval' function
+            eval('class ' . ucfirst($controllerClass) . ' extends ' . $controllerParentClass . '{}');
         }
 
-        $controller = new $controllerClassName($params);
+        // Create the instance of $controllerClass
+        $controller = new $controllerClass();
+
+        // Call the dispatch() method on that instance
         $controller->dispatch();
     }
 
@@ -64,30 +120,24 @@ class Indi_Uri extends Indi_Uri_Base {
         $this->checkSeoUrlsMode();
     }
 
+    /**
+     * Check if seo uri mode is enabled, and if so - convert it back to non-seo
+     * structure and provide the ability of it further use
+     */
     public function checkSeoUrlsMode(){
-        list($first) = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-        if ($first != 'admin') {
-            $this->adjustUriIfSubdomain();
-            $GLOBALS['enableSeoUrls'] = current(Indi::db()->query('SELECT `value` FROM `fconfig` WHERE `alias` = "enableSeoUrls"')->fetch());
-            $GLOBALS['INITIAL_URI'] = $_SERVER['REQUEST_URI'];
-            if ($GLOBALS['enableSeoUrls'] == 'true') {
-                $_SERVER['REQUEST_URI'] = $this->seo2sys($_SERVER['REQUEST_URI']);
-            }
-        }
-    }
 
-    public function adjustUriIfSubdomain(){
-        $db = Indi::db();
-        $subdomains = $db->query('SELECT `fs`.`alias` FROM `subdomain` `sd`, `fsection` `fs` WHERE `sd`.`fsectionId` = `fs`.`id`')->fetchAll();
-        $subdomainsArray = array(); foreach ($subdomains as $sd) $subdomainsArray[] = $sd['alias'];
-        if ($_SERVER['HTTP_HOST'] != Indi::ini()->general->domain) {
-            $subdomain = str_replace('.'.Indi::ini()->general->domain, '',$_SERVER['HTTP_HOST']);
-            if (in_array($subdomain, $subdomainsArray)) {
-                $_SERVER['REQUEST_URI'] = '/' . $subdomain . $_SERVER['REQUEST_URI'];
-            }
-            Indi::registry('subdomain', $subdomain);
+        // Backup initial REQUEST_URI
+        $GLOBALS['INITIAL_URI'] = $_SERVER['REQUEST_URI'];
+
+        // If seo uri mode is enabled
+        if (Indi::ini()->general->seoUri) {
+
+            // Convert existing request uri to non-seo structure
+            $_SERVER['REQUEST_URI'] = $this->seo2sys($_SERVER['REQUEST_URI']);
+
+            // Refresh uri properties
+            $this->parse();
         }
-        Indi::registry('subdomains', $subdomainsArray);
     }
 
     public function seo2sys($seo){

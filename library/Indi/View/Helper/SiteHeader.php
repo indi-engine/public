@@ -1,6 +1,7 @@
 <?php
-class Indi_View_Helper_SiteHeader extends Indi_View_Helper_Abstract{
-	public function siteHeader(){
+class Indi_View_Helper_SiteHeader {
+
+	public function siteHeader() {
 		ob_start();?>
     <!DOCTYPE HTML>
     <html>

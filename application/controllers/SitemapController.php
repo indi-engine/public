@@ -13,7 +13,7 @@ class SitemapController extends Indi_Controller_Front{
                         $toggle = $model->fields('toggle');
                         $move = $model->fields('move');
                         $rs = $model->fetchAll($toggle ? '`toggle` = "y"' : null, $move ? '`move`' : null);
-                        if ($model->name() == 'staticpage') {
+                        if ($model->table() == 'staticpage') {
                             foreach ($rs as $r) {
                                 $map[] = array(
                                     'title' => $r->title,

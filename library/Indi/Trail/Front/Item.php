@@ -150,7 +150,7 @@ class Indi_Trail_Front_Item {
                     // mean parentSectionConnector logic won't be used for that
                     $connector = $i == 1 && Indi::trail($i-1)->section->parentSectionConnector
                         ? Indi::trail($i-1)->section->foreign('parentSectionConnector')->alias
-                        : Indi::trail($i)->model->name() . 'Id';
+                        : Indi::trail($i)->model->table() . 'Id';
 
                     // Get the connector value from session special place
                     if ($this->model->fields($connector))
@@ -166,7 +166,7 @@ class Indi_Trail_Front_Item {
             $where = array();
 
             // Determine the connector field
-            $connector = $this->model->name() . 'Id';
+            $connector = $this->model->table() . 'Id';
 
             // Get the id
             $id = Indi::trail()->action->maintenance == 'rs' && $index == 1
@@ -181,6 +181,7 @@ class Indi_Trail_Front_Item {
             // If a special section's primary filter was defined add it to WHERE clauses stack
             if (strlen(Indi::trail($index)->section->compiled('filter')))
                 $where[] = Indi::trail($index)->section->compiled('filter');
+
 
             // Try to find a row by given id, that, hovewer, also match all requirements,
             // mentioned in all other WHERE clause parts

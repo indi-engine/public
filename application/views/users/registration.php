@@ -1,1 +1,1 @@
-<div id="regForm"><?=$_SESSION['userId'] ? 'Вы уже зарегистрированы' : $this->userRegister()?></div>
+<div id="regForm"><?=$_SESSION['userId'] ? 'Вы уже зарегистрированы' : 'Тут будет форма регистрации'?></div>

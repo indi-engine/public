@@ -1,6 +1,7 @@
 <?php
-class Indi_View_Helper_SiteFooter extends Indi_View_Helper_Abstract{
-	public function siteFooter(){
+class Indi_View_Helper_SiteFooter {
+
+	public function siteFooter() {
 		ob_start();?>
 	  </div>
 	</td>

@@ -110,11 +110,30 @@ class Indi_Controller_Front extends Indi_Controller {
 	public function preDispatch(){
 
         // Set current language
-        @include_once(DOC . STD . '/coref/application/lang/' . Indi::ini('view')->lang . '.php');
-        @include_once(DOC . STD . '/www/application/lang/' . Indi::ini('view')->lang . '.php');
+        @include_once(DOC . STD . '/coref/application/lang/' . Indi::ini('lang')->front . '.php');
+        @include_once(DOC . STD . '/www/application/lang/' . Indi::ini('lang')->front . '.php');
+
+        // Allow accept XHR requests from other hosts
+        header('Access-Control-Allow-Origin: *');
 
         // Do access check
         $data = $this->auth(Indi::uri('section'), Indi::uri('action'));
+
+        // If requested section or action are not registered in the system's database
+        if ($data == I_ACCESS_ERROR_NO_SUCH_SECTION || $data == I_ACCESS_ERROR_NO_SUCH_ACTION) {
+
+            // Build the controller class name and action method name
+            $controllerClass = ucfirst(Indi::uri()->section) . 'Controller';
+            $actionMethod = Indi::uri()->action . 'Action';
+
+            // Check if section and action are physically represented by a certain controller class and action method
+            // within it, despite on some/all of them are not registered in the system's database, and if so -
+            // skip all further operations of current preDispatch() method, to provide an ability for action method
+            // to be called on controller class instance directly, e.g without system additional features, available
+            // for sections and actions, registered in the system's database
+            if (class_exists($controllerClass) && method_exists($controllerClass, $actionMethod))
+                return;
+        }
 
         // If $data is not an array, e.g some error was there, prepare the 404 system state
         if (!is_array($data)) $this->notFound();
@@ -122,47 +141,11 @@ class Indi_Controller_Front extends Indi_Controller {
         // Setup the Indi_Trail_Front object instance
         Indi::trail($this->_routeA)->authLevel2($this);
 
-        // Allow accept XHR requests from other hosts
-		header('Access-Control-Allow-Origin: *');
-
         // Static blocks
         Indi::view()->blocks = Indi::blocks();
 
-        // If current section is associated with some entity
-        if (Indi::trail()->model) {
-
-            // If current section's type is 'regular', so section is not a single-row section
-            if (Indi::trail()->section->type == 'r' && Indi::trail()->action->maintenance == 'rs') {
-
-                // Get the primary WHERE clause
-                $primaryWHERE = $this->primaryWHERE();
-
-                // Get final WHERE clause, that will implode primaryWHERE, filterWHERE and keywordWHERE
-                $finalWHERE = $this->finalWHERE($primaryWHERE);
-
-                // Setup parentId in session
-                if (Indi::uri('id'))
-                    $_SESSION['indi']['front']['trail']['parentId'][Indi::trail()->section->id] = Indi::uri('id');
-
-                // Setup 'limit' argument for use in fetchAll/fetchTree
-                if (isset(Indi::get()->limit) == false || ! (int) Indi::get()->limit)
-                    Indi::get()->limit = Indi::trail()->section->defaultLimit
-                        ? Indi::trail()->section->defaultLimit
-                        : null;
-
-                // Setup 'page' argument for use in fetchAll/fetchTree
-                if (isset(Indi::get()->page) == false || ! (int) Indi::get()->page) Indi::get()->page = null;
-
-                // Get final ORDER clause, built regarding column name and sorting direction
-                $finalORDER = $this->finalORDER($finalWHERE, Indi::get()->sort);
-
-                // Get the rowset, fetched using WHERE and ORDER clauses, and with built LIMIT clause,
-                // constructed with usage of $this->get('limit') and $this->get('page') params
-                $this->rowset = Indi::trail()->model->{
-                'fetch'. (Indi::trail()->model->treeColumn() ? 'Tree' : 'All')
-                }($finalWHERE, $finalORDER, Indi::get('limit'), Indi::get('page'));
-            }
-        }
+        // Fetch rowset if need
+        $this->rowset();
     }
 
     /**
@@ -249,7 +232,11 @@ class Indi_Controller_Front extends Indi_Controller {
         }*/
 
         // Final WHERE stack
-        $finalWHERE = $primaryWHERE;
+        $finalWHERE = is_array($primaryWHERE)
+            ? $primaryWHERE
+            : (strlen($primaryWHERE)
+                ? array($primaryWHERE)
+                : array());
 
         // Get a WHERE stack of clauses, related to filters search and merge it with $primaryWHERE
         if (count($filtersWHERE = $this->filtersWHERE())) $finalWHERE = array_merge($finalWHERE, $filtersWHERE);
@@ -392,7 +379,7 @@ class Indi_Controller_Front extends Indi_Controller {
         // logic.
         $connectorAlias = Indi::trail()->section->parentSectionConnector
             ? Indi::trail()->section->foreign('parentSectionConnector')->alias
-            : Indi::trail(1)->model->name() . 'Id';
+            : Indi::trail(1)->model->table() . 'Id';
 
         // If parent section's type is 'regular'
         if (Indi::trail(1)->section->type == 'r') {
@@ -416,5 +403,59 @@ class Indi_Controller_Front extends Indi_Controller {
         return Indi::trail()->model->fields($connectorAlias)->storeRelationAbility == 'many'
             ? 'FIND_IN_SET("' . $connectorValue . '" IN `' . $connectorAlias . '`)'
             : '`' . $connectorAlias . '` = "' . $connectorValue . '"';
+    }
+
+    /**
+     * Getter
+     *
+     * @param string $property
+     * @return mixed
+     */
+    public function __get($property) {
+        if (preg_match('/^user$/i', $property)) return Indi::user();
+        else return parent::__get($property);
+    }
+
+
+    /**
+     * Fetch a rowset
+     */
+    public function rowset() {
+
+        // If current section is associated with some entity
+        if (Indi::trail()->model) {
+
+            // If current section's type is 'regular', so section is not a single-row section
+            if (Indi::trail()->section->type == 'r' && Indi::trail()->action->maintenance == 'rs') {
+
+                // Get the primary WHERE clause
+                $primaryWHERE = $this->primaryWHERE();
+
+                // Get final WHERE clause, that will implode primaryWHERE, filterWHERE and keywordWHERE
+                $finalWHERE = $this->finalWHERE($primaryWHERE);
+
+                // Setup parentId in session
+                if (Indi::uri('id'))
+                    $_SESSION['indi']['front']['trail']['parentId'][Indi::trail()->section->id] = Indi::uri('id');
+
+                // Setup 'limit' argument for use in fetchAll/fetchTree
+                if (isset(Indi::get()->limit) == false || ! (int) Indi::get()->limit)
+                    Indi::get()->limit = Indi::trail()->section->defaultLimit
+                        ? Indi::trail()->section->defaultLimit
+                        : null;
+
+                // Setup 'page' argument for use in fetchAll/fetchTree
+                if (isset(Indi::get()->page) == false || ! (int) Indi::get()->page) Indi::get()->page = 1;
+
+                // Get final ORDER clause, built regarding column name and sorting direction
+                $finalORDER = $this->finalORDER($finalWHERE, Indi::get()->sort);
+
+                // Get the rowset, fetched using WHERE and ORDER clauses, and with built LIMIT clause,
+                // constructed with usage of $this->get('limit') and $this->get('page') params
+                $this->rowset = Indi::trail()->model->{
+                'fetch'. (Indi::trail()->model->treeColumn() ? 'Tree' : 'All')
+                }($finalWHERE, $finalORDER, Indi::get('limit'), Indi::get('page'));
+            }
+        }
     }
 }

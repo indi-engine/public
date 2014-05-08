@@ -35,7 +35,7 @@ class Menu extends Indi_Db_Table {
 			$i++;
 		}
         $rows[$rowset->count() - $dec - 1]['last'] = true;
-		$data = array ('table' => $this->_name, 'rows' => $rows, 'rowClass' => $this->_rowClass, 'found' => count($rows) - $dec);
+		$data = array ('table' => $this->_table, 'rows' => $rows, 'rowClass' => $this->_rowClass, 'found' => count($rows) - $dec);
 		if ($activeItemHere) $data['activeBranch'] = true;
 		return new $this->_rowsetClass($data);
 	}

@@ -7,9 +7,9 @@ class Indi_View_Helper_SiteHeader {
     <html>
     <head>
         <?=Indi::view()->siteFavicon()?>
-        <title><?=Indi::view()->seoTDK('title')?></title>
-        <meta name="description" content="<?=Indi::view()->seoTDK('description')?>">
-        <meta name="keywords" content="<?=Indi::view()->seoTDK('keyword')?>">
+        <title><?=Indi::view()->siteMetatag('title')?></title>
+        <meta name="description" content="<?=Indi::view()->siteMetatag('description')?>">
+        <meta name="keywords" content="<?=Indi::view()->siteMetatag('keywords')?>">
         <link rel="stylesheet" type="text/css" href="/css/style.css">
         <link rel="stylesheet" type="text/css" href="/css/adjust.css">
         <script src="/js/jquery-1.9.1.min.js"></script>

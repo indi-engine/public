@@ -115,9 +115,26 @@ class Indi_Uri extends Indi_Uri_Base {
         $controller->dispatch();
     }
 
+    /**
+     * Pre-dispatch operations
+     */
     public function preDispatch() {
+
+        // Call parent's preDispatch()
         parent::preDispatch();
-        $this->checkSeoUrlsMode();
+
+        // If section name is not valid - throw an 404 page
+        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', Indi::uri('section')))
+
+            // Setup uri's section as random value, that knowingly won't match any existing section,
+            // so we can be sure that '404' page will be displayed
+            Indi::uri()->section = preg_replace('/^[0-9]+/', '', grs());
+
+
+
+        // Else check if seo uri mode is enabled, and if so - convert it back to non-seo
+        // structure and provide the ability of it further use
+        else $this->checkSeoUrlsMode();
     }
 
     /**
@@ -146,6 +163,9 @@ class Indi_Uri extends Indi_Uri_Base {
         $aim = explode('/', trim($url['path'], '/'));
         if ($aim[count($aim)-1] == 'noseo') return $seo;
         if (count($aim) > 1) {
+
+            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+
             $sql = '
 			SELECT
 			  `sa`.`id`
@@ -208,6 +228,9 @@ class Indi_Uri extends Indi_Uri_Base {
                 $sys = array($aim[0]);
                 $sys[] = $parts[0]['alias'] ? $parts[0]['alias'] : ($parts[0]['rename'] ? $parts[0]['originalAlias'] : $aim[1]);
                 $alias = $parts[0]['alias'] ? $aim[1] : $aim[2];
+
+                if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+
                 for ($i = 0; $i < count($parts); $i++) {
                     if (!in_array($parts[$i]['entityId'], array_keys($models))) $models[$parts[$i]['entityId']] = Indi::model($parts[$i]['entityId']);
                 }
@@ -226,13 +249,16 @@ class Indi_Uri extends Indi_Uri_Base {
                         } else if ($i > 0){
                             $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                             $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
+                            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                         }
                         $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                         $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
+                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                     } else if ($component = $models[$parts[$i]['entityId']]->fetchRow('`alias` = ""' . $where)) {
                         $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                         $shift++;
                         $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
+                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                     } else if (!$alias) {
                         $sys[] = $parts[$i-1]['prefix'] . '/' . $lastId;
                         break;

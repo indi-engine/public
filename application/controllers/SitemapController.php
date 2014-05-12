@@ -5,10 +5,10 @@ class SitemapController extends Indi_Controller_Front{
             $row->level = 1;
             foreach ($row->dependent['actions'] as $action) {
                 if ($action->type == 'r') {
-                    if ($action->foreign['factionId']->alias == 'index') {
+                    if ($action->foreign('factionId')->alias == 'index') {
                         $map[] = array('title' => $row->title, 'href' => '/' . $row->alias, 'level' => $row->level);
                         $row->hasIndexAction = true;
-                    } else if ($action->foreign['factionId']->alias == 'details') {
+                    } else if ($action->foreign('factionId')->alias == 'details') {
                         $model = Indi::model($row->entityId);
                         $toggle = $model->fields('toggle');
                         $move = $model->fields('move');

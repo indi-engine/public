@@ -42,16 +42,21 @@ class Indi_Trail_Front {
         self::$items = array_reverse(self::$items);
     }
 
-    public function authLevel2 (Indi_Controller_Front &$controller) {
+    public function authLevel2(Indi_Controller_Front &$controller) {
 
         // Setup controller
         self::$controller = &$controller;
 
+        // If 'id' param is mentioned in uri, but it's value either not specified,
+        // or does not match allowed format - setup an error
+        if (array_key_exists('id', (array) Indi::uri()) && !preg_match('/^[1-9][0-9]*$/', Indi::uri()->id))
+            $error = I_URI_ERROR_ID_FORMAT;
 
-        // Setup row for each trail item, or setup an access error
-        for ($i = 0; $i < count(self::$items); $i++)
-            if ($error = Indi::trail($i)->row($i))
-                break;
+        // Else setup row for each trail item, or setup an access error
+        else
+            for ($i = 0; $i < count(self::$items); $i++)
+                if ($error = Indi::trail($i)->row($i))
+                    break;
 
 //        d($_SESSION['indi']['front']['trail']['parentId']);
 //        d($i);

@@ -168,20 +168,24 @@ class Indi_Trail_Front_Item {
             // Determine the connector field
             $connector = $this->model->table() . 'Id';
 
-            // Get the id
-            $id = Indi::trail()->action->maintenance == 'rs' && $index == 1
-                ? Indi::uri('id')
-                : (Indi::trail($index-1)->model->fields($connector)
-                    ? Indi::trail($index-1)->row->$connector
-                    : $_SESSION['indi']['front']['trail']['parentId'][Indi::trail($index-1)->section->id]);
+            // If current trail item's section is a regular section
+            if ($this->section->type == 'r') {
 
-            // Add main item to WHERE clause stack
-            $where[] = '`id` = "' . $id . '"';
+                // Get the id
+                $id = Indi::trail()->action->maintenance == 'rs' && $index == 1
+                    ? Indi::uri('id')
+                    : (Indi::trail($index-1)->model->fields($connector)
+                        ? Indi::trail($index-1)->row->$connector
+                        : $_SESSION['indi']['front']['trail']['parentId'][Indi::trail($index-1)->section->id]);
+
+                // Add main item to WHERE clause stack
+                $where[] = '`id` = "' . $id . '"';
+
+            // Else if current trail item's section is a single-row section
+            } else $where[] = $this->section->compiled('where');
 
             // If a special section's primary filter was defined add it to WHERE clauses stack
-            if (strlen(Indi::trail($index)->section->compiled('filter')))
-                $where[] = Indi::trail($index)->section->compiled('filter');
-
+            if (strlen($this->section->compiled('filter'))) $where[] = $this->section->compiled('filter');
 
             // Try to find a row by given id, that, hovewer, also match all requirements,
             // mentioned in all other WHERE clause parts

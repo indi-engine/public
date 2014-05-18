@@ -153,9 +153,17 @@ class Indi_Uri extends Indi_Uri_Base {
             $_SERVER['REQUEST_URI'] = $this->seo2sys($_SERVER['REQUEST_URI']);
 
             // Refresh uri properties
-            $this->parse();
+            if ($_SERVER['REQUEST_URI'] != $GLOBALS['INITIAL_URI']) $this->parse();
         }
     }
+
+    /**
+     * Clear all current uri params
+     */
+    public function clear() {
+        foreach ($this as $prop => $value) if ($prop != 'staticpageAdditionalWHERE') unset($this->$prop);
+    }
+
 
     public function seo2sys($seo){
         $db = Indi::db();
@@ -282,9 +290,11 @@ class Indi_Uri extends Indi_Uri_Base {
         $db = Indi::db();
         $furi = array();
         for ($i = 0; $i < count($uri); $i++) if (count(explode('/', trim($uri[$i], '/'))) > 1) $furi[] = $uri[$i]; $uri = $furi; $furi = array();
-
         $groups = array();
         for ($i = 0; $i < count($uri); $i++) {
+
+            if (STD) $uri[$i] = preg_replace('~^' . preg_quote(STD, '~') . '~', '', $uri[$i]);
+
             list($empty, $section, $action, $prefix) = explode('/', $uri[$i]);
             $group = '/' . $section . '/' . $action . '/';
             if (!in_array($group, $groups)) $groups[] = $group;
@@ -384,6 +394,7 @@ class Indi_Uri extends Indi_Uri_Base {
                 $item = explode('/', $group['search'][$key]);
                 for ($i = 5; $i < count($item); $i++) $reverted[] = $item[$i];
                 $groupped[$concat]['replace'][$key] .= implode('/', $reverted);
+                //if (STD) $groupped[$concat]['replace'][$key] = STD . $groupped[$concat]['replace'][$key];
             }
             $sys = str_replace($groupped[$concat]['search'], $groupped[$concat]['replace'], $sys);
         }

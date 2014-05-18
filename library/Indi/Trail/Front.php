@@ -42,6 +42,14 @@ class Indi_Trail_Front {
         self::$items = array_reverse(self::$items);
     }
 
+    /**
+     * Second level access check:
+     * 1. If an 'id' uri param was passed - check it's format
+     * 2. Setup *_Row objects for all trail items, where them should be fetched. But if some *_Row object for some
+     *    trail items was not found, despite it should - stop, and force 404 error
+     *
+     * @param Indi_Controller_Front $controller
+     */
     public function authLevel2(Indi_Controller_Front &$controller) {
 
         // Setup controller

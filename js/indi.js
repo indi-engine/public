@@ -16,10 +16,10 @@ $(document).ready(function(){
         }
 
         // If there is no <script> element in dom, that has 'std' attribute - return
-        if(!$('script[std]').length) return;
+        if(!$('script[std]').length) return indi;
 
         // If 'std' attribute is empty - return
-        if ((indi.std = $('script[std]').attr('std')).length == 0) return;
+        if ((indi.std = $('script[std]').attr('std')).length == 0) return indi;
 
         // Setup additional ajax config
         $.ajaxSetup({
@@ -39,6 +39,7 @@ $(document).ready(function(){
 
         return indi;
     }(window.Indi || {});
+
 });
 
 

@@ -20,7 +20,7 @@ class Indi_View_Helper_SiteMetatag {
         if (self::$_rs === null) {
 
             // Fetch it
-            $rs = Indi::model('Metatag')->fetchAll('`fsection2factionId` = "' . Indi::trail()->section2action->id . '"');
+            $rs = Indi::model('Metatag')->fetchAll('`fsection2factionId` = "' . Indi::trail()->section2action->id . '"', '`move`');
 
             // Setup foreign data for 'fieldId' property
             $rs->foreign('fieldId');

@@ -109,10 +109,6 @@ class Indi_Controller_Front extends Indi_Controller {
 
 	public function preDispatch(){
 
-        // Set current language
-        @include_once(DOC . STD . '/coref/application/lang/' . Indi::ini('lang')->front . '.php');
-        @include_once(DOC . STD . '/www/application/lang/' . Indi::ini('lang')->front . '.php');
-
         // Allow accept XHR requests from other hosts
         header('Access-Control-Allow-Origin: *');
 
@@ -404,7 +400,7 @@ class Indi_Controller_Front extends Indi_Controller {
 
         // Return clause
         return Indi::trail()->model->fields($connectorAlias)->storeRelationAbility == 'many'
-            ? 'FIND_IN_SET("' . $connectorValue . '" IN `' . $connectorAlias . '`)'
+            ? 'FIND_IN_SET("' . $connectorValue . '", `' . $connectorAlias . '`)'
             : '`' . $connectorAlias . '` = "' . $connectorValue . '"';
     }
 

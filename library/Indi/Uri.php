@@ -48,7 +48,7 @@ class Indi_Uri extends Indi_Uri_Base {
                 Indi::uri()->id = $staticpageR->id;
 
                 // If static page is '404' setup $notFound flag as boolean true
-                if ($staticpageR->alias == '404') $notFound = true;
+                if ($staticpageR->alias == '404' || !$staticpageR->id) $notFound = true;
 
             // Else if found Fsection_Row represents some another frontend section, but the action, specified within
             // the uri - is not a one of actions, that are allowed for use in frontend
@@ -75,6 +75,7 @@ class Indi_Uri extends Indi_Uri_Base {
 
         if ($notFound) {
             header('HTTP/1.1 404 Not Found');
+            if (!$staticpageR->id) die(I_NO404_FOUND);
         } else {
             $this->trailingSlash();
         }
@@ -124,7 +125,7 @@ class Indi_Uri extends Indi_Uri_Base {
         parent::preDispatch();
 
         // If section name is not valid - throw an 404 page
-        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', Indi::uri('section')))
+        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9\-]*$/', Indi::uri('section')))
 
             // Setup uri's section as random value, that knowingly won't match any existing section,
             // so we can be sure that '404' page will be displayed
@@ -135,6 +136,7 @@ class Indi_Uri extends Indi_Uri_Base {
         // Else check if seo uri mode is enabled, and if so - convert it back to non-seo
         // structure and provide the ability of it further use
         else $this->checkSeoUrlsMode();
+
     }
 
     /**

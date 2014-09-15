@@ -37,6 +37,16 @@ class Indi_Trail_Front_Item {
     public $rowset;
 
     /**
+     * View filename, that should be rendered
+     *
+     * @var
+     */
+    protected $_view = array(
+        'inner' => null,
+        'outer' => null
+    );
+
+    /**
      * Getter. Currently declared only for getting 'model' property
      *
      * @param $property
@@ -197,15 +207,24 @@ class Indi_Trail_Front_Item {
     }
 
     /**
-     * Get the  filename of view script, that should be rendered
-     *
-     * @return string
+     * @param $name
+     * @param $inner
+     * @return mixed
      */
-    public function view() {
+    public function view($name = '', $inner = false) {
 
-        return $this->section2action->type == 'j'
-            ? $this->section->alias . '/' . $this->action->alias . '.php'
-            : 'index.php';
+        if ($name)
+            $this->_view[$inner ? 'inner' : 'outer']
+                = $this->section2action->type == 'j' || strpos($name,  '/') === false || $inner
+                    ? $this->section->alias . '/' . $name . '.php'
+                    : $name. '.php';
+
+        else if ($this->_view[$inner ? 'inner' : 'outer'] === null)
+            $this->_view[$inner ? 'inner' : 'outer'] = $this->section2action->type == 'j' || $inner
+                ? $this->section->alias . '/' . $this->action->alias . '.php'
+                : 'index.php';
+
+        return $this->_view[$inner ? 'inner' : 'outer'];
     }
 
 }

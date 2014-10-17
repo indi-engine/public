@@ -109,6 +109,10 @@ class Indi_Controller_Front extends Indi_Controller {
 
 	public function preDispatch(){
 
+        // Set locale
+        if (Indi::ini()->lang->front == 'ru')
+            setlocale(LC_TIME, 'ru_RU', 'ru_utf8', 'Russian', 'ru_RU.UTF-8','Russian_Russia.UTF8');
+
         // Allow accept XHR requests from other hosts
         header('Access-Control-Allow-Origin: *');
 

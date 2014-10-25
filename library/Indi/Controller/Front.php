@@ -111,7 +111,7 @@ class Indi_Controller_Front extends Indi_Controller {
 
         // Set locale
         if (Indi::ini()->lang->front == 'ru')
-            setlocale(LC_TIME, 'ru_RU', 'ru_utf8', 'Russian', 'ru_RU.UTF-8','Russian_Russia.UTF8');
+            setlocale(LC_TIME, 'ru_RU.UTF-8', 'ru_utf8', 'Russian_Russia.UTF8', 'ru_RU', 'Russian');
 
         // Allow accept XHR requests from other hosts
         header('Access-Control-Allow-Origin: *');

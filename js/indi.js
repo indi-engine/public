@@ -67,6 +67,32 @@ $(document).ready(function(){
 			});
             return false;
 		}
+        
+        /**
+         * Convert the query string to the object, containing param-value pairs, and return it as a whole, 
+         * or the value of a certain key, if `param` argument is given
+         * 
+         * @param param
+         * @return {Object/String}
+         */
+        indi.get = function(param) {
+            
+            // Setup auxilliary variables
+            var pairA = document.location.search.substr(1).split('&'), pairI, getO = {};
+            
+            // Build getO object
+            for (var i = 0; i < pairA.length; i++) {
+                
+                // Get the param-value pair
+                pairI = pairA[i].split('=');
+                
+                // Append to `getO` object as a value under certain property
+                getO[pairI[0]] = pairI[1];
+            }
+            
+            // Return whole object or a certain param
+            return param ? getO[param] : getO;
+        }
 
 		// If there is no <script> element in dom, that has 'std' attribute - return
         if (!$('script[std]').length) return indi;

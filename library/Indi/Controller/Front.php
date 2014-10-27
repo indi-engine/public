@@ -323,7 +323,7 @@ class Indi_Controller_Front extends Indi_Controller {
             // Append STD to all urls, specified in 'href' and 'src' attributes within 'link', 'script' and 'img' tags
             $out = preg_replace('/(<(link|a)[^>]+href\s*=\s*["\'])\//', '$1' . STD . '/', $out);
             $out = preg_replace('/(<script[^>]+src\s*=\s*["\'])\//', '$1' . STD . '/', $out);
-            $out = preg_replace('/(<img[^>]+src\s*=\s*["\'])\//', '$1' . STD . '/', $out);
+            $out = preg_replace('/(<(img|iframe)[^>]+src\s*=\s*["\'])\//', '$1' . STD . '/', $out);
             $out = preg_replace('/(url\s*\(\s*)(\/[^\/])/', '$1' . STD . '$2', $out);
             $out = preg_replace('/(<form[^>]+action\s*=\s*["\'])\//', '$1' . STD . '/', $out);
             $out = preg_replace('/(href\s*=\s*(["\']))http:\/\/' . preg_quote($_SERVER['HTTP_HOST'], '/') . '\/?\2/', '$1' . STD . '/$2', $out);

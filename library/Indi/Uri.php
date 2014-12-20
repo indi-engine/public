@@ -11,7 +11,13 @@ class Indi_Uri extends Indi_Uri_Base {
     /**
      * Dispatch the uri
      */
-    public function dispatch(){
+    public function dispatch($uri = ''){
+
+        // If $uri argument is given - parse it, and replace own properties with got-by-parsing ones
+        if ($uri) $this->parse($uri);
+
+        // If `module` property became 'admin' - call parent's dispatch
+        if ($this->module == 'admin') return parent::dispatch();
 
         // Do pre-dispatch operations
         $this->preDispatch();
@@ -130,8 +136,6 @@ class Indi_Uri extends Indi_Uri_Base {
             // Setup uri's section as random value, that knowingly won't match any existing section,
             // so we can be sure that '404' page will be displayed
             Indi::uri()->section = preg_replace('/^[0-9]+/', '', grs());
-
-
 
         // Else check if seo uri mode is enabled, and if so - convert it back to non-seo
         // structure and provide the ability of it further use

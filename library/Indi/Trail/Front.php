@@ -36,7 +36,7 @@ class Indi_Trail_Front {
 
         // Setup initial set of properties
         foreach ($sectionRs as $sectionR)
-            self::$items[] = new Indi_Trail_Front_Item($sectionR);
+            self::$items[] = new Indi_Trail_Front_Item($sectionR, $sectionRs->count() - ++$i);
 
         // Reverse items
         self::$items = array_reverse(self::$items);
@@ -82,5 +82,20 @@ class Indi_Trail_Front {
      */
     public function item($stepsUp = 0) {
         return self::$items[count(self::$items) - 1 - $stepsUp];
+    }
+
+    /**
+     * Get an array version of trail. Method is used to pass trail data to javascript as json
+     *
+     * @uses Indi_Trail_Item::toArray()
+     * @return array
+     */
+    public function toArray() {
+        $array = array();
+        foreach (self::$items as $item) {
+            $array[] = $item->toArray();
+        }
+        end(self::$items);
+        return $array;
     }
 }

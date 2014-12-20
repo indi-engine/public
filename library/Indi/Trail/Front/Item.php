@@ -37,6 +37,13 @@ class Indi_Trail_Front_Item {
     public $rowset;
 
     /**
+     * Store current trail item index/level
+     *
+     * @var int
+     */
+    public $level = null;
+
+    /**
      * Getter. Currently declared only for getting 'model' property
      *
      * @param $property
@@ -52,8 +59,9 @@ class Indi_Trail_Front_Item {
      * Set up all internal properties
      *
      * @param Indi_Db_Table_Row $sectionR
+     * @param $level
      */
-    public function __construct($sectionR) {
+    public function __construct($sectionR, $level) {
 
         // Setup $this->section
         $config = array();
@@ -61,8 +69,16 @@ class Indi_Trail_Front_Item {
         foreach ($dataTypeA as $dataTypeI) $config[$dataTypeI] = $sectionR->$dataTypeI();
         $this->section = Indi::model('Fsection')->createRow($config);
 
+        // Setup index
+        $this->level = $level;
+
         // If current trail item will be a first item
         if (count(Indi_Trail_Admin::$items) == 0) {
+
+            // Setup $this->actions
+            foreach ($sectionR->nested('fsection2faction') as $section2actionR)
+                $actionA[] = $section2actionR->foreign('factionId');
+            $this->actions = Indi::model('Action')->createRowset(array('rows' => $actionA));
 
             // Setup a primary hash for current section
             $this->section->temporary('primaryHash', Indi::uri('ph'));
@@ -74,6 +90,13 @@ class Indi_Trail_Front_Item {
                     $this->action = $fsection2factionR->foreign('factionId');
                 }
 
+            // Setup empty rowset of disabled fields. Front-trail currently does not yet
+            // deal with disabled fields in a way that admin-trail does, so we need to simulate
+            // disabled fields property existence for compatibility with existing javascript
+            // components, that require that property to be defined
+            $this->disabledFields = Indi::model('DisabledField')->createRowset(array('rows' => array()));
+
+        // Else
         } else {
 
             // Setup action as 'index'
@@ -99,7 +122,8 @@ class Indi_Trail_Front_Item {
             // If current section is a non-single-row section, and current action's maintenance is 'row'
             // (e.g not 'none' or 'rowset'), and there was no id passed within the uri - throw 'Not Found' page
             if ($this->section->type == 'r' && $this->action->maintenance == 'r' && !Indi::uri('id'))
-                Indi_Trail_Front::$controller->notFound();
+                if(!preg_match('/^save|create$/', Indi::uri('action')))
+                    Indi_Trail_Front::$controller->notFound();
 
             // If current action's maintenance is 'none' or 'rowset', e.g is not 'row' - return
             if ($this->action->maintenance != 'r') return;
@@ -208,4 +232,47 @@ class Indi_Trail_Front_Item {
             : 'index.php';
     }
 
+    /**
+     * Get array version of internal variables
+     *
+     * @return array
+     */
+    public function toArray() {
+        $array = array();
+        if ($this->section) {
+            $array['section'] = $this->section->toArray();
+            //$array['section']['defaultSortFieldAlias'] = $this->section->foreign('defaultSortField')->alias;
+        }
+        if ($this->sections) $array['sections'] = $this->sections->toArray();
+        if ($this->action) $array['action'] = $this->action->toArray();
+        if ($this->actions) $array['actions'] = $this->actions->toArray();
+        if ($this->row) {
+            $array['row'] = $this->row->toArray('current', true, $this->action->alias);
+            $array['row']['title'] = $this->row->title();
+
+            // Collect aliases of all CKEditor-fields
+            $ckeFieldA = array();
+            foreach ($this->fields as $fieldR)
+                if ($fieldR->foreign('elementId')->alias == 'html')
+                    $ckeFieldA[] = $fieldR->alias;
+
+            // Get the aliases of fields, that are CKEditor-fields
+            $ckeDataA = array_intersect(array_keys($array['row']), $ckeFieldA);
+
+            // Left-trim the {STD . '/www'} from the values of 'href' and 'src' attributes
+            foreach ($ckeDataA as $ckeDataI) $array['row'][$ckeDataI]
+                = preg_replace(':(\s*(src|href)\s*=\s*[\'"])(/[^/]):', '$1' . STD . '$3', $array['row'][$ckeDataI]);
+
+        }
+        if ($this->model) $array['model'] = $this->model->toArray();
+        if ($this->fields) $array['fields'] = $this->fields->toArray(true);
+        if ($this->gridFields) $array['gridFields'] = $this->gridFields->toArray();
+        if ($this->grid) $array['grid'] = $this->grid->toNestingTree()->toArray(true);
+        if ($this->disabledFields) $array['disabledFields'] = $this->disabledFields->toArray();
+        if ($this->filters) $array['filters'] = $this->filters->toArray();
+        if ($this->filtersSharedRow) $array['filtersSharedRow'] = $this->filtersSharedRow->toArray('current', true, true);
+        if ($this->scope) $array['scope'] = $this->scope->toArray();
+        $array['level'] = $this->level;
+        return $array;
+    }
 }

@@ -461,4 +461,19 @@ class Indi_Controller_Front extends Indi_Controller {
             }
         }
     }
+
+    /**
+     * Prepare arguments for $this->_odata() function call, and call that function for fetching combo options data.
+     * This function handles all cases, related to combo options data fetch, such as
+     * page-by-page appending/prepending, combo-keyword lookup, fetch satellited data (for example fetch cities for second
+     * combo when country was selected in first combo), and all this for form and sibling combos
+     *
+     * We do all these things by passing this call to formActionOdata() function
+     *
+     * @param string $for A name of field, that combo data should be fetched for
+     * @param array $post Request params, required to make a proper fetch (page number, keyword, value of satellite)
+     */
+    public function createActionOdata($for, $post) {
+        $this->formActionOdata($for, $post);
+    }
 }

@@ -131,12 +131,9 @@ class Indi_Uri extends Indi_Uri_Base {
             // so we can be sure that '404' page will be displayed
             Indi::uri()->section = preg_replace('/^[0-9]+/', '', grs());
 
-
-
         // Else check if seo uri mode is enabled, and if so - convert it back to non-seo
         // structure and provide the ability of it further use
         else $this->checkSeoUrlsMode();
-
     }
 
     /**

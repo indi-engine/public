@@ -10,53 +10,40 @@ Ext.define('Indi.lib.trail.Trail', {
     singleton: true,
 
     /**
-     * The data array, that indi.trail will be operating with.
-     * Data will be set by php's json_encode($this->trail->toArray()) call
-     *
-     * @type Array
-     */
-    store: [],
-
-    /**
      * Apply the store
      *
-     * @param store
+     * @param route
      */
-    apply: function(store){
-        var me = this, i;
+    apply: function(scope){
+        var section = scope.route.last().section.alias, action = scope.route.last().action.alias, controller;
 
-        // Reset store
-        me.store = [];
+        // Fulfil global fields storage
+        scope.route.forEach(function(r, i, a) {
+            if (r.fields) r.fields.forEach(function(fr, fi, fa){
+                Indi.fields[fr.id] = new Indi.lib.dbtable.Row.prototype(fr);
+            });
+        });
 
-        // Update store
-        for (i = 0; i < store.length; i++) me.store.push(Ext.create('Indi.trail.Item', Ext.merge({level: i}, store[i])));
-    },
-
-    /**
-     *
-     */
-    run: function() {
-
-        Indi.story.push(window.location.pathname);
-
-        // Try to load controller, or use existing (if it was initially or already loaded)
+        // Try to pick up loaded controller and dispatch it's certain action
         try {
-            var controller = Indi.app.getController(Indi.trail().section.alias);
 
-            // Try to dispatch action
-            try { controller.dispatch(Indi.trail().action.alias, Indi.story[Indi.story.length-1]); }
+            // Get controller
+            controller = Indi.app.getController(section);
 
-            // If try was unsuccessful - log the error stack to the console
-            catch (e) { console.log(e.stack); }
+            // Try dispatch needed action
+            try {controller.dispatch(scope);}
 
-        // If try was unsuccessful
-        } catch (e){
+                // If dispatch failed - write the stack to the console
+            catch (e) {console.log(e.stack);}
 
-            // Build controller name and define it in the 'on-the-fly' mode
-            Ext.define('Indi.controller.' + Indi.trail().section.alias, {extend: 'Indi.Controller'});
+            // If failed
+        } catch (e) {
 
-            // Instantiate that controller and dispatch an action
-            Indi.app.getController(Indi.trail().section.alias).dispatch(Indi.trail().action.alias, Indi.story[Indi.story.length-1]);
+            // Define needed controller on-the-fly
+            Ext.define('Indi.controller.' + section, {extend: 'Indi.Controller'});
+
+            // Instantiate it, and dispatch needed action
+            Indi.app.getController(section).dispatch(scope);
         }
     },
 
@@ -74,5 +61,12 @@ Ext.define('Indi.lib.trail.Trail', {
 
         // Get the trail item, located at required level, and return it
         return me.store[me.store.length - 1 - stepsUp];
+    },
+
+    /**
+     * Empty function
+     */
+    breadCrumbs: function(){
+
     }
 });

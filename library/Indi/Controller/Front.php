@@ -317,6 +317,9 @@ class Indi_Controller_Front extends Indi_Controller {
         // If seo url mode is turned on - convert the urls
 		if (Indi::ini()->general->seoUri) $out = Indi_Uri::sys2seo($out);
 
+        // Nest static page uris
+        $out = Indi_Uri::nspu($out);
+
         // If project runs not from document root, but from some subfolder within document root
         if (STD) {
 

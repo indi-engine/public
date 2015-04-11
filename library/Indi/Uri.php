@@ -38,23 +38,41 @@ class Indi_Uri extends Indi_Uri_Base {
             // If found Fsection_Row represents 'static' frontend section
             if ($fsectionR->alias == 'static') {
 
-                // Build the array of WHERE clauses, for try to find a appropriate static page
-                $where = array_merge(
-                    array('`alias` IN ("' . Indi::uri('section') . '", "404")', '`toggle` = "y"'),
-                    $this->staticpageAdditionalWHERE
-                );
+                // Here we collect all uri parts starting from Indi::uri('section') and up to the end inclusively as there
+                // may be a probability of nested uri parts, each representing some static page at it's deepness level
+                $aliasA = array();
+                foreach ($this as $key => $value)
+                    if (in($key, ar('staticpageAdditionalWHERE,module'))) continue;
+                    else if (in($key, ar('section,action'))) $aliasA[] = $value;
+                    else array_push($aliasA, $key, $value);
+                $aliasA = explode(',', trim(im($aliasA), ' ,'));
 
-                // Get the Staticpage_Row object, related either to appropriate static page, or '404'
-                // static page, which will be used in case if appropriate static page won't be found
-                $staticpageR = Indi::model('Staticpage')->fetchRow($where, 'FIND_IN_SET(`alias`, "' . Indi::uri('section') . ',404")');
+                foreach ($aliasA as $i => $aliasI) {
 
-                // Setup new uri params
-                Indi::uri()->section = 'static';
-                Indi::uri()->action = 'details';
-                Indi::uri()->id = $staticpageR->id;
+                    // Build the array of WHERE clauses, for try to find a appropriate static page
+                    $where = array_merge(
+                        array('`alias` IN ("' . alias($aliasI) . '", "404")', '`toggle` = "y"'),
+                        $this->staticpageAdditionalWHERE
+                    );
 
-                // If static page is '404' setup $notFound flag as boolean true
-                if ($staticpageR->alias == '404' || !$staticpageR->id) $notFound = true;
+                    // Force tree check
+                    if ($staticpageR) $where[] = '(`staticpageId` = "' . $staticpageR->id . '" OR `alias` = "404")';
+
+                    // Get the Staticpage_Row object, related either to appropriate static page, or '404'
+                    // static page, which will be used in case if appropriate static page won't be found
+                    $staticpageR = Indi::model('Staticpage')->fetchRow($where, 'FIND_IN_SET(`alias`, "' . alias($aliasI) . ',404")');
+
+                    // Setup new uri params
+                    Indi::uri()->section = 'static';
+                    Indi::uri()->action = 'details';
+                    Indi::uri()->id = $staticpageR->id;
+
+                    // If static page is '404' setup $notFound flag as boolean true
+                    if ($staticpageR->alias == '404' || !$staticpageR->id) {
+                        $notFound = true;
+                        break;
+                    }
+                }
 
             // Else if found Fsection_Row represents some another frontend section, but the action, specified within
             // the uri - is not a one of actions, that are allowed for use in frontend
@@ -406,4 +424,36 @@ class Indi_Uri extends Indi_Uri_Base {
         }
         return $sys;
     }
-}
+
+    /**
+     * Search all href of <a> tags, check if href is leading to a static page, and if so - prepend that href with hrefs
+     * of all parent static pages, delimied by '/'
+     *
+     * @param $html
+     * @return mixed
+     */
+    public function nspu($html) {
+
+        // Get all static pages
+        $staticpageA = Indi::db()->query('SELECT `id`, `alias`, `staticpageId` AS `parentId`  FROM `staticpage`')->fetchAll();
+
+        // Re-index static pages array, so their ids will be their keys
+        foreach ($staticpageA as $i => $staticpageI) $tmp[$staticpageI['id']] = $staticpageI; $staticpageA = $tmp;
+
+        // Prepend static page uris with parent pages aliases
+        foreach ($staticpageA as $staticpageI) if ($staticpageI['parentId']) {
+
+            // Reset prefix and initial $id
+            $pref = ''; $id = $staticpageI['id'];
+
+            // Build prefix
+            while ($id = $staticpageA[$id]['parentId']) $pref = $staticpageA[$id]['alias'] . '/' . $pref;
+
+            // Make the replacements
+            $html = preg_replace('~href="/(' . $staticpageI['alias'] . '/)"~', 'href="/' . $pref . '$1"', $html);
+        }
+
+        // Return
+        return $html;
+    }
+};

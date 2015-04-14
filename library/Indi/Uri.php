@@ -40,13 +40,9 @@ class Indi_Uri extends Indi_Uri_Base {
 
                 // Here we collect all uri parts starting from Indi::uri('section') and up to the end inclusively as there
                 // may be a probability of nested uri parts, each representing some static page at it's deepness level
-                $aliasA = array();
-                foreach ($this as $key => $value)
-                    if (in($key, ar('staticpageAdditionalWHERE,module'))) continue;
-                    else if (in($key, ar('section,action'))) $aliasA[] = $value;
-                    else array_push($aliasA, $key, $value);
-                $aliasA = explode(',', trim(im($aliasA), ' ,'));
+                $aliasA = explode('/', trim(preg_replace('~^' . PRE . '~', '', str_replace($_SERVER['QUERY_STRING'], '', URI)), '? /'));
 
+                // For each alias
                 foreach ($aliasA as $i => $aliasI) {
 
                     // Build the array of WHERE clauses, for try to find a appropriate static page

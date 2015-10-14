@@ -8,7 +8,7 @@ Ext.override(Indi.lib.controller.Controller, {
      * Dictionary of default modes and views for different actions
      */
     statics: {
-        defaultMode: {create: 'row'},
-        defaultView: {create: 'form'}
+        defaultMode: {index: 'rowset', create: 'row'},
+        defaultView: {index: 'grid', create: 'form'}
     }
 });

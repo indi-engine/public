@@ -72,6 +72,12 @@ class Indi_Trail_Front {
 
         // Flush an error, if error was met
         if ($error) $controller->notFound();
+
+        // Setup blank scope object for each trail item
+        for ($i = 0; $i < count(self::$items); $i++) {
+            Indi::trail($i)->scope = new Indi_Trail_Admin_Item_Scope($i);
+            Indi::trail($i)->filtersSharedRow($i);
+        }
     }
 
     /**

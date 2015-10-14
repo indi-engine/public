@@ -1,5 +1,5 @@
 <?php
-class Indi_Trail_Front_Item {
+class Indi_Trail_Front_Item extends Indi_Trail_Item {
 
     /**
      * Store item section row object
@@ -23,37 +23,11 @@ class Indi_Trail_Front_Item {
     public $section2action;
 
     /**
-     * Store trail item row
-     *
-     * @var Indi_Db_Table_Row object
-     */
-    public $row;
-
-    /**
      * Store trail item rowset
      *
      * @var Indi_Db_Table_Rowset object
      */
     public $rowset;
-
-    /**
-     * Store current trail item index/level
-     *
-     * @var int
-     */
-    public $level = null;
-
-    /**
-     * Getter. Currently declared only for getting 'model' property
-     *
-     * @param $property
-     * @return Indi_Db_Table
-     */
-    public function __get($property) {
-        if ($this->section->entityId)
-            if ($property == 'model') return Indi::model($this->section->entityId);
-            else if ($property == 'fields') return Indi::model($this->section->entityId)->fields();
-    }
 
     /**
      * Set up all internal properties
@@ -75,6 +49,9 @@ class Indi_Trail_Front_Item {
         // If current trail item will be a first item
         if (count(Indi_Trail_Admin::$items) == 0) {
 
+            // Setup filters
+            if ($sectionR->sectionId) $this->filters = $sectionR->foreign('sectionId')->nested('search');
+
             // Setup $this->actions
             foreach ($sectionR->nested('fsection2faction') as $section2actionR)
                 $actionA[] = $section2actionR->foreign('factionId');
@@ -89,6 +66,26 @@ class Indi_Trail_Front_Item {
                     $this->section2action = $fsection2factionR;
                     $this->action = $fsection2factionR->foreign('factionId');
                 }
+
+            // Set fields, that will be used as grid columns in case if current action is 'index'
+            if (Indi::uri('action') == 'index' && $sectionR->sectionId) {
+                $gridFieldA = array();
+                foreach ($sectionR->foreign('sectionId')->nested('grid') as $gridR) {
+                    foreach ($this->fields as $fieldR) {
+                        if ($gridR->fieldId == $fieldR->id) {
+                            $gridFieldI = $fieldR;
+                            if ($gridR->alterTitle) $gridFieldI->title = $gridR->alterTitle;
+                            $gridFieldA[] = $gridFieldI;
+                            $gridFieldAliasA[] = $gridFieldI->alias;
+                        }
+                    }
+                }
+                $this->gridFields = Indi::model('Field')->createRowset(array(
+                    'rows' => $gridFieldA,
+                    'aliases' => $gridFieldAliasA
+                ));
+                $this->grid = $sectionR->foreign('sectionId')->nested('grid');
+            }
 
             // Setup empty rowset of disabled fields. Front-trail currently does not yet
             // deal with disabled fields in a way that admin-trail does, so we need to simulate
@@ -230,49 +227,5 @@ class Indi_Trail_Front_Item {
         return $this->section2action->type == 'j'
             ? $this->section->alias . '/' . $this->action->alias . '.php'
             : 'index.php';
-    }
-
-    /**
-     * Get array version of internal variables
-     *
-     * @return array
-     */
-    public function toArray() {
-        $array = array();
-        if ($this->section) {
-            $array['section'] = $this->section->toArray();
-            //$array['section']['defaultSortFieldAlias'] = $this->section->foreign('defaultSortField')->alias;
-        }
-        if ($this->sections) $array['sections'] = $this->sections->toArray();
-        if ($this->action) $array['action'] = $this->action->toArray();
-        if ($this->actions) $array['actions'] = $this->actions->toArray();
-        if ($this->row) {
-            $array['row'] = $this->row->toArray('current', true, $this->action->alias);
-            $array['row']['title'] = $this->row->title();
-
-            // Collect aliases of all CKEditor-fields
-            $ckeFieldA = array();
-            foreach ($this->fields as $fieldR)
-                if ($fieldR->foreign('elementId')->alias == 'html')
-                    $ckeFieldA[] = $fieldR->alias;
-
-            // Get the aliases of fields, that are CKEditor-fields
-            $ckeDataA = array_intersect(array_keys($array['row']), $ckeFieldA);
-
-            // Left-trim the {STD . '/www'} from the values of 'href' and 'src' attributes
-            foreach ($ckeDataA as $ckeDataI) $array['row'][$ckeDataI]
-                = preg_replace(':(\s*(src|href)\s*=\s*[\'"])(/[^/]):', '$1' . STD . '$3', $array['row'][$ckeDataI]);
-
-        }
-        if ($this->model) $array['model'] = $this->model->toArray();
-        if ($this->fields) $array['fields'] = $this->fields->toArray(true);
-        if ($this->gridFields) $array['gridFields'] = $this->gridFields->toArray();
-        if ($this->grid) $array['grid'] = $this->grid->toNestingTree()->toArray(true);
-        if ($this->disabledFields) $array['disabledFields'] = $this->disabledFields->toArray();
-        if ($this->filters) $array['filters'] = $this->filters->toArray();
-        if ($this->filtersSharedRow) $array['filtersSharedRow'] = $this->filtersSharedRow->toArray('current', true, true);
-        if ($this->scope) $array['scope'] = $this->scope->toArray();
-        $array['level'] = $this->level;
-        return $array;
     }
 }

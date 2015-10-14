@@ -206,59 +206,34 @@ class Indi_Controller_Front extends Indi_Controller {
      * rowset. Function use a $primaryWHERE, merge it with $this->filtersWHERE() and append to it $this->keywordWHERE()
      * if return values of these function are not null
      *
-     * @param string $primaryWHERE
-     * @param string $customWHERE
-     * @return null|string
+     * @param array|string $primaryWHERE
+     * @param null $customWHERE
+     * @param bool $merge
+     * @return array|null|string
      */
-    public function finalWHERE($primaryWHERE, $customWHERE = null) {
+    public function finalWHERE($primaryWHERE, $customWHERE = null, $merge = true) {
 
-        /*// If there was a primaryHash passed instead of $primaryWHERE param - then we extract all scope params from
-        if (is_string($primaryWHERE) && preg_match('/^[0-9a-zA-Z]{10}$/', $primaryWHERE)) {
-
-            // Get the scope
-            $scope = Indi::view()->getScope(null, null, Indi::uri()->section, $primaryWHERE);
-
-            // Prepare $primaryWHERE
-            $primaryWHERE = $scope['primary'] ? array($scope['primary']) : array();
-
-            // Prepare search data for $this->filtersWHERE()
-            Indi::get()->search = $scope['filters'];
-
-            // Prepare search data for $this->keywordWHERE()
-            Indi::uri()->keyword = urlencode($scope['keyword']);
-
-            // Prepare sort params for $this->finalORDER()
-            Indi::get()->sort = $scope['order'];
-        }*/
-
-        // Final WHERE stack
-        $finalWHERE = is_array($primaryWHERE)
-            ? $primaryWHERE
-            : (strlen($primaryWHERE)
-                ? array($primaryWHERE)
-                : array());
-
-        // Get a WHERE stack of clauses, related to filters search and merge it with $primaryWHERE
-        if (count($filtersWHERE = $this->filtersWHERE())) $finalWHERE = array_merge($finalWHERE, $filtersWHERE);
-
-        // Get a WHERE clause, related to keyword search and append it to $primaryWHERE
-        if ($keywordWHERE = $this->keywordWHERE()) $finalWHERE[] = $keywordWHERE;
-
-        // Prepend a custom WHERE clause
-        if (is_array($customWHERE) && count($customWHERE)) {
-            $finalWHERE = array_merge($finalWHERE, $customWHERE);
-        } else if ($customWHERE) {
-            $finalWHERE[] = $customWHERE;
-        }
+        // Get ordinary finalWHERE
+        $finalWHERE = parent::finalWHERE($primaryWHERE, $customWHERE, false);
 
         // If current section is a single-row section, and where-get-the-id clause was specified
         if (Indi::trail()->section->type == 's' && strlen(Indi::trail()->section->where))
 
             // Append that clause to $finalWHERE
-            $finalWHERE[] = Indi::trail()->section->compiled('where');
+            $finalWHERE['singlerow'] = Indi::trail()->section->compiled('where');
 
-        // Return imploded $finalWHERE, or null if there are no items in $finalWHERE stack
-        return count($finalWHERE) ? implode(' AND ', $finalWHERE) : null;
+        // If WHERE clause should be a string
+        if ($merge) {
+
+            // Force $finalWHERE to be single-dimension array
+            foreach ($finalWHERE as $part => $where) if (is_array($where)) $finalWHERE[$part] = im($where, ' AND ');
+
+            // Stringify
+            $finalWHERE = implode(' AND ', $finalWHERE);
+        }
+
+        // Return
+        return $finalWHERE;
     }
 
     /**

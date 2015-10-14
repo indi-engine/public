@@ -57,6 +57,9 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 $actionA[] = $section2actionR->foreign('factionId');
             $this->actions = Indi::model('Action')->createRowset(array('rows' => $actionA));
 
+            // Setup subsections
+            $this->sections = $sectionR->nested('fsection');
+
             // Setup a primary hash for current section
             $this->section->temporary('primaryHash', Indi::uri('ph'));
 

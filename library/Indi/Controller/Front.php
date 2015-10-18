@@ -257,10 +257,10 @@ class Indi_Controller_Front extends Indi_Controller {
         $where = array();
 
         // Append a childs-by-parent clause to primaryWHERE stack
-        if ($parentWHERE = $this->parentWHERE()) $where[] = $parentWHERE;
+        if ($parentWHERE = $this->parentWHERE()) $where['parent'] = $parentWHERE;
 
         // If a special section's primary filter was defined, add it to primary WHERE clauses stack
-        if (strlen(Indi::trail()->section->filter)) $where[] = Indi::trail()->section->compiled('filter');
+        if (strlen(Indi::trail()->section->filter)) $where['static'] = Indi::trail()->section->compiled('filter');
 
         // Adjust primary WHERE clauses stack - apply some custom adjustments
         $where = $this->adjustPrimaryWHERE($where);
@@ -453,5 +453,39 @@ class Indi_Controller_Front extends Indi_Controller {
      */
     public function createActionOdata($for, $post) {
         $this->formActionOdata($for, $post);
+    }
+
+    /**
+     * Include additional model's properties into response json, representing rowset data
+     *
+     * @param $propS string|array Comma-separated prop names (e.g. field aliases)
+     */
+    public function inclGridProp($propS) {
+
+        // Convert $propS arg to array and collect fieldR instances array,
+        // with values of `alias` prop, containing in $propS arg
+        $addGridFieldOriginalA = array();
+        foreach (ar($propS) as $propI)
+            $addGridFieldOriginal[] = Indi::trail()->model->fields($propI);
+
+        // Create rowset
+        $addGridFieldRs = Indi::model('Field')->createRowset(array(
+            'rows' => $addGridFieldOriginal,
+            'aliases' => $propS
+        ));
+
+        // Merge existing grid fields with additional
+        Indi::trail()->gridFields->merge($addGridFieldRs);
+    }
+
+    /**
+     * Include additional model's properties into response json, representing rowset data
+     *
+     * @param $propS string|array Comma-separated prop names (e.g. field aliases)
+     */
+    public function exclGridProp($propS) {
+
+        // Merge existing grid fields with additional
+        Indi::trail()->gridFields->exclude($propS, 'alias');
     }
 }

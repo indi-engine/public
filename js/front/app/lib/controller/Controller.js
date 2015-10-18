@@ -9,6 +9,6 @@ Ext.override(Indi.lib.controller.Controller, {
      */
     statics: {
         defaultMode: {index: 'rowset', create: 'row'},
-        defaultView: {index: 'grid', create: 'form'}
+        defaultView: {create: 'form'}
     }
 });

@@ -4,7 +4,11 @@
 Ext.define('Indi.view.Viewport', {
 
     // @inheritdoc
-    extend: 'Ext.container.Viewport',
+    //extend: 'Ext.container.Viewport',
+    extend: 'Ext.panel.Panel',
+    renderTo: 'ext-container',
+    width: '100%',
+    height: '100%',
 
     // @inheritdoc
     layout: {

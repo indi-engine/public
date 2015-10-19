@@ -1,12 +1,8 @@
 /**
  * Setup a viewport for Indi Engine interface, used to handle extjs usage within public area
  */
-Ext.define('Indi.view.Viewport', {
+Ext.define('Indi.view.viewport.Base', {
 
-    // @inheritdoc
-    //extend: 'Ext.container.Viewport',
-    extend: 'Ext.panel.Panel',
-    renderTo: 'ext-container',
     width: '100%',
     height: '100%',
 
@@ -14,9 +10,6 @@ Ext.define('Indi.view.Viewport', {
     layout: {
         type: 'fit'
     },
-
-    // @inheritdoc
-    alternateClassName: 'Indi.Viewport',
 
     /**
      * Center panel cfg
@@ -32,16 +25,5 @@ Ext.define('Indi.view.Viewport', {
             id: 'i-center-center',
             border: 0
         }]
-    },
-
-    // @inheritdoc
-    initComponent: function() {
-        var me = this;
-
-        // Setup items
-        me.items = [me.center];
-
-        // Call parent
-        me.callParent();
     }
 });

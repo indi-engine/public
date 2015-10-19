@@ -50,7 +50,11 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
         if (count(Indi_Trail_Admin::$items) == 0) {
 
             // Setup filters
-            if ($sectionR->sectionId) $this->filters = $sectionR->foreign('sectionId')->nested('search');
+            if ($sectionR->sectionId)
+                $this->filters = $sectionR->foreign('sectionId')->nested('search', array(
+                    'where' => '`toggle` = "y"',
+                    'order' => '`move`'
+                ));
 
             // Setup $this->actions
             foreach ($sectionR->nested('fsection2faction') as $section2actionR)

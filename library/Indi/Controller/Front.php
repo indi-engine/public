@@ -38,7 +38,7 @@ class Indi_Controller_Front extends Indi_Controller {
                 AND `s`.`alias` = "' . $section . '"
         ')->fetch();
 
-        // Set approriate error messages if:
+        // Set appropriate error messages if:
         // 1. Section was not found
         if (!$data) $error = I_ACCESS_ERROR_NO_SUCH_SECTION;
 

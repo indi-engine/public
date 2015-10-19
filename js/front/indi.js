@@ -9,18 +9,20 @@ Ext.override(Indi, {
      * Launch callback
      */
     launch: function() {
-        var me = this;
+        var me = this, xbody;
 
         // Merge static properties, passed within construction, with prototype's static properties
         me.self = Ext.merge(me.self, me.statics);
 
-        // Create a viewport
-        Indi.viewport = Ext.create('Indi.view.Viewport');
+        // Chose viewport
+        Indi.viewport = (xbody = Ext.getBody().down('[i-load] .x-body'))
+            ? Ext.create('Indi.view.viewport.Panel', {renderTo: xbody})
+            : Ext.create('Indi.view.viewport.Iframe');
 
         // Link an app
         Indi.app = me;
 
         // Run
-        Indi.trail(true).run();
+        Indi.trail(true).apply(Ext.merge(json, {uri: window.location.pathname, cfg: {}}));
     }
 });

@@ -3,11 +3,11 @@
 [i-load] tr td {padding: 0;}
 [i-load] table, [i-load] table tr, [i-load] table tr td, [i-load] table tr th {border: none;}
 [i-load] input[type="text"], [i-load] input[type="password"], [i-load] input[type="email"], [i-load] textarea, [i-load] select {
-    padding: 0;
+    /*padding: 0;
     margin: 0;
     outline: none;
     max-width: auto;
-    border: none;
+    border: none;*/
     -moz-border-radius: 0px;
     -webkit-border-radius: 0px;
     border-radius: 0px;

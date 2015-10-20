@@ -41,7 +41,7 @@ class Indi_View_Helper_Pager {
         if ($pages > 1) {
 
             // If current page is not first page - prepend pages listing with special 'previous' link
-            if ($this->page > 1) {?><a class="previous-link" href="<?=$this->href($this->page - 1)?>">Предыдущая</a><?}
+            if ($this->page > 1) {?><a data-page="<?=$this->page - 1?>" class="previous-link" href="<?=$this->href($this->page - 1)?>">Предыдущая</a><?}
 
             // Start building pages list html
             ?><span class="pages"><?
@@ -96,7 +96,7 @@ class Indi_View_Helper_Pager {
 
             // Another 'next' element, which will be outside span.pages element, but within div.pager element
             if ($this->page < $pages) {
-                ?><a class="next-link" href="<?=$this->href($this->page + 1)?>">Следующая</a><?
+                ?><a data-page="<?=$this->page + 1?>" class="next-link" href="<?=$this->href($this->page + 1)?>">Следующая</a><?
             }
         }
 
@@ -136,6 +136,6 @@ class Indi_View_Helper_Pager {
         $title = $text ? $text : $page;
 
         // Build and return page element
-        return $page == $this->page ? '<span class="current">' . $title . '</span>' : '<a href="' . $this->href($page) . '">' . $title . '</a>';
+        return $page == $this->page ? '<span class="current">' . $title . '</span>' : '<a data-page="' . $page . '" href="' . $this->href($page) . '">' . $title . '</a>';
     }
 }

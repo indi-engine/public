@@ -28,7 +28,7 @@ class Indi_View_Helper_SiteMetatag {
             // Distribute metatag data to 3 groups - title, description and keywords
             self::$_rs['title'] = $rs->select('title', 'tag');
             self::$_rs['keywords'] = $rs->select('keywords', 'tag');
-            self::$_rs['description'] = $rs->select('keyword', 'tag');
+            self::$_rs['description'] = $rs->select('description', 'tag');
 
             // Unset $rs
             unset($rs);

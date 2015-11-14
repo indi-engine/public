@@ -1,6 +1,9 @@
 <?php
 class Indi_Controller_Admin_Meta extends Indi_Controller_Admin {
 
+    /**
+     *
+     */
     public function adjustGridDataRowset() {
         foreach ($this->rowset as $row)
             if ($row->type != 'dynamic' || $row->source != 'row') {
@@ -13,14 +16,57 @@ class Indi_Controller_Admin_Meta extends Indi_Controller_Admin {
             }
     }
 
+    /**
+     *
+     */
     public function formAction() {
-        if (isset(Indi::post()->up) && isset(Indi::post()->fsectionId)) {
 
-            $fsectionR = Indi::model('Fsection')->fetchRow('`id` = "' . (int) Indi::post()->fsectionId . '"');
+        // Get current $fsectionR
+        $fsectionR = $this->row->foreign('fsectionId'); $maxUp = 0; $limit = 100;
 
-            for ($i = 0; $i < Indi::post()->up; $i++) $fsectionR = $fsectionR->foreign('fsectionId');
+        // Find max value for 'up' prop
+        while (($fsectionR = $fsectionR->foreign('fsectionId')) && ($i = $i + 1) && $i < $limit) $maxUp++;
 
-            die(json_encode(array('state' => 'ok', 'entityId' => $fsectionR->entityId)));
-        } else parent::formAction();
+        // Set up max value for 'up' prop into the view
+        $this->row->view('up', array('maxValue' => $maxUp));
+
+        // Call parent
+        $this->callParent();
+    }
+
+    /**
+     * @param $data
+     */
+    public function formActionIEntityId($data) {
+
+        // Check that 'up' param exists within $data
+        if (!array_key_exists('up', $data)) jflush(false, 'Отсутствует параметр "Шагов вверх"');
+
+        // Check that 'up' param is integer
+        if (!Indi::rexm('int11', $data['up']))
+            jflush(false, 'Значение "' . $data['up'] . '" параметра "Шагов вверх" должно быть целым числом');
+
+        // Check that 'up' param exists within $data
+        if (!array_key_exists('fsectionId', $data)) jflush(false, 'Отсутствует параметр "Раздел"');
+
+        // Check that 'fsectionId' param is integer
+        if (!Indi::rexm('int11', $data['fsectionId']))
+            jflush(false, 'Значение "' . $data['fsectionId'] . '" параметра "Раздел" должно быть целым числом');
+
+        // Get `id` of `fsection` entry, that will be the start point for stepping upper
+        if (!$fsectionR = Indi::model('Fsection')->fetchRow('`id` = "' . $data['fsectionId'] . '"'))
+            jflush(false, 'Раздел с идентификатором "' . $data['fsectionId'] . '" не найден');
+
+        // Remember start section
+        $start = $fsectionR;
+
+        // Make required count of steps up
+        for ($i = 0; $i < $data['up']; $i++)
+            if (!$fsectionR = $fsectionR->foreign('fsectionId'))
+                jflush(false, 'Раздел, вышестоящий на ' . tbq($i + 1, 'уровней,уровень,уровня')
+                    . ' относительно раздела "' . $start->title . '" - не существует');
+
+        // Flush response
+        jflush(true, array('entityId' => $fsectionR->entityId));
     }
 }

@@ -66,7 +66,7 @@ Ext.define('Indi.lib.controller.Meta', {
                     }],
                     listeners: {
                         enablebysatellite: function(c, d) {
-                            c.setVisible(d.type == 'dynamic');
+                            c.setVisible(d.type == 'dynamic' && c.maxValue);
                         }
                     }
                 }

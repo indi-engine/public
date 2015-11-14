@@ -30,6 +30,11 @@ class Indi_Controller_Admin_Meta extends Indi_Controller_Admin {
         // Set up max value for 'up' prop into the view
         $this->row->view('up', array('maxValue' => $maxUp));
 
+        // Clear deprecated `javascript` props values
+        foreach (ar('source,type') as $p)
+            foreach(Indi::trail()->model->fields($p)->nested('enumset') as $enumsetR)
+                $enumsetR->javascript = '';
+
         // Call parent
         $this->callParent();
     }

@@ -430,6 +430,9 @@ class Indi_Uri extends Indi_Uri_Base {
      */
     public function nspu($html) {
 
+        // If 'staticpage' entity is not a tree
+        if (!Indi::model('Staticpage')->fields('staticpageId')) return $html;
+
         // Get all static pages
         $staticpageA = Indi::db()->query('SELECT `id`, `alias`, `staticpageId` AS `parentId`  FROM `staticpage`')->fetchAll();
 

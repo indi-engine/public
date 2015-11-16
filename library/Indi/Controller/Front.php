@@ -310,6 +310,9 @@ class Indi_Controller_Front extends Indi_Controller {
         // Replace all non-https links to https if https protocol is in use
         $out = $this->httpsMaintenance($out);
 
+        // If $this->encoding is not 'utf-8', convert output to needed encoding
+        if (strtolower($this->encoding) != 'utf-8') $out = iconv('utf-8', $this->encoding, $out);
+
         // Flush $out and die, or return $out
         if ($die) die($out); else return $out;
 	}

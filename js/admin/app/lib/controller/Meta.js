@@ -37,7 +37,9 @@ Ext.define('Indi.lib.controller.Meta', {
                     }
                 }
             },
+            formItem$Type: {nojs: true},
             formItem$Source: {
+                nojs: true,
                 considerOn: [{
                     name: 'type'
                 }],

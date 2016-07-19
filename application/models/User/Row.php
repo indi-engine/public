@@ -1,20 +1,4 @@
 <?php
-class User_Row extends Indi_Db_Table_Row {
+class User_Row extends User_Row_Base {
 
-    /**
-     * General purpose of this function is to make user logout in
-     * an easy-shortcut usage style, e.g Indi::user()->logout();
-     */
-	public function logout() {
-
-        // Update last visit's timestamp
-        $this->lastVisit = date('Y-m-d H:i:s');
-		$this->save();
-
-        // Remove 'user' key from $_SESSION
-		unset($_SESSION['user']);
-        
-        // Remove the same one from registry
-		Indi::registry('user', null);
-	}
 }

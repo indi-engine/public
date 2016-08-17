@@ -40,7 +40,7 @@ class Indi_Uri extends Indi_Uri_Base {
 
                 // Here we collect all uri parts starting from Indi::uri('section') and up to the end inclusively as there
                 // may be a probability of nested uri parts, each representing some static page at it's deepness level
-                $aliasA = explode('/', trim(preg_replace('~^' . PRE . '~', '', str_replace($_SERVER['QUERY_STRING'], '', URI)), '? /'));
+                $aliasA = explode('/', trim(preg_replace('~^' . STD . '~', '', str_replace($_SERVER['QUERY_STRING'], '', URI)), '? /'));
 
                 // For each alias
                 foreach ($aliasA as $i => $aliasI) {

@@ -22,6 +22,27 @@ class Indi_Uri extends Indi_Uri_Base {
         // Do pre-dispatch operations
         $this->preDispatch();
 
+        // Try to find an `fsection` entry having `alias` == 'index' and `type` = 's', and if found
+        // - check if Indi::uri('section') equals to one of that `fsection` entry's `faction` entry.
+        // If yes - this mean that we should, in fact, do some jerk with uri parts
+        if (Indi::db()->query('
+            SELECT `s`.`alias`
+            FROM
+              `fsection` `s`,
+              `faction` `a`,
+              `fsection2faction` `sa`
+            WHERE 1
+              AND `s`.`alias` = "index"
+              AND `s`.`type` = "s"
+              AND `s`.`toggle` = "y"
+              AND `s`.`id` = `sa`.`fsectionId`
+              AND `sa`.`factionId` = `a`.`id`
+              AND `a`.`alias` = "' . Indi::uri('section') . '"
+        ')->fetch()) {
+            Indi::uri()->action = Indi::uri()->section;
+            Indi::uri()->section = 'index';
+        }
+
         // Build the controller class name
         $controllerClass = ucfirst(Indi::uri('section')) . 'Controller';
 

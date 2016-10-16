@@ -491,4 +491,95 @@ class Indi_Controller_Front extends Indi_Controller {
         // Merge existing grid fields with additional
         Indi::trail()->gridFields->exclude($propS, 'alias');
     }
+
+    public function saveAction($return = false) {
+
+        // Get array of aliases of fields, that are actually represented in database table
+        $possibleA = Indi::trail()->model->fields(null, 'columns');
+
+        // Pick values from Indi::post()
+        $data = array();
+        foreach ($possibleA as $possibleI)
+            if (array_key_exists($possibleI, Indi::post()))
+                $data[$possibleI] = Indi::post($possibleI);
+
+        // Unset 'move' key from data, because 'move' is a system field, and it's value will be set up automatically
+        unset($data['move']);
+
+        // If there was disabled fields defined for current section, we check if default value was additionally set up
+        // and if so - assign that default value under that disabled field alias in $data array, or, if default value
+        // was not set - drop corresponding key from $data array
+        foreach (Indi::trail()->disabledFields as $disabledFieldR)
+            foreach (Indi::trail()->fields as $fieldR)
+                if ($fieldR->id == $disabledFieldR->fieldId)
+                    if (!strlen($disabledFieldR->defaultValue)) unset($data[$fieldR->alias]);
+                    else $data[$fieldR->alias] = $disabledFieldR->compiled('defaultValue');
+
+        // If current cms user is an alternate, and if there is corresponding field within current entity structure
+        if ($this->alternateWHERE() && Indi::admin()->alternate && in($aid = Indi::admin()->alternate . 'Id', $possibleA))
+
+            // Prevent alternate field to be set via POST, as it was already (properly)
+            // set at the stage of trail item row initialization
+            unset($data[$aid]);
+
+        // Update current row properties with values from $data array
+        $this->row->assign($data);
+
+        // If some of the fields are CKEditor-fields, we shoudl check whether they contain '<img>' and other tags
+        // having STD injections at the beginning of 'src' or other same-aim html attributes, and if found - trim
+        // it, for avoid problems while possible move from STD to non-STD, or other-STD directories
+        $this->row->trimSTDfromCKEvalues();
+
+        // Get the list of ids of fields, that are disabled
+        $disabledA = Indi::trail()->disabledFields->column('fieldId');
+
+        // Get the aliases of fields, that are file upload fields, and that are not disabled,
+        // and are to be some changes applied on
+        $filefields = array();
+        foreach (Indi::trail()->fields as $fieldR)
+            if ($fieldR->foreign('elementId')->alias == 'upload' && !in_array($fieldR->id, $disabledA) && $_ = Indi::post($fieldR->alias)) {
+                if (!Indi::rexm('url', $_) && $_ != 'd') $_ = Indi::post()->{$fieldR->alias} = 'm';
+                if (preg_match('/^m|d$/', $_) || Indi::rexm('url', $_)) $filefields[] = $fieldR->alias;
+            }
+
+        // Prepare metadata, related to fileupload fields contents modifications
+        $this->row->files($filefields);
+
+        // Do pre-save operations
+        $this->preSave();
+
+        // Setup 'zeroValue'-mismatches
+        foreach (Indi::trail()->fields as $fieldR)
+            if ($fieldR->mode == 'required' && $this->row->fieldIsZero($fieldR->alias))
+                $this->row->mismatch($fieldR->alias, sprintf(I_ROWSAVE_ERROR_VALUE_REQUIRED, $fieldR->title));
+
+        // Flush 'zeroValue'-mismatches
+        $this->row->mflush();
+
+        // Save the row
+        $this->row->save();
+
+        // Do post-save operations
+        $this->postSave();
+
+        // Prepare response. Here we mention a number of properties, related to saved row, as a proof that row saved ok
+        $response = array('title' => $this->row->title(), 'id' => $this->row->id);
+
+        // Wrap row in a rowset, process it by $this->adjustGridDataRowset(), and unwrap back
+        $this->rowset = Indi::trail()->model->createRowset(array('rows' => array($this->row)));
+        //$this->adjustGridDataRowset();
+        $this->row = $this->rowset->at(0);
+
+        // Wrap data entry in an array, process it by $this->adjustGridData(), and uwrap back
+        $data = array($this->row->toGridData($this->row->affected()));
+        //$this->adjustGridData($data);
+        $data = array_shift($data);
+
+        // Assign row's grid data into 'affected' key within $response
+        $response['affected'] = $data;
+        $response['success'] = true;
+
+        // Flush response
+        if ($return) return $response; else jflush($response);
+    }
 }

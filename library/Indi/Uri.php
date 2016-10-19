@@ -449,7 +449,7 @@ class Indi_Uri extends Indi_Uri_Base {
      * @param $html
      * @return mixed
      */
-    public function nspu($html) {
+    public static function nspu($html) {
 
         // If 'staticpage' entity is not a tree
         if (!Indi::model('Staticpage')->fields('staticpageId')) return $html;

@@ -217,6 +217,19 @@ $(document).ready(function(){
             }
         }
 
+        $.fn.markInvalid = function(message) {
+            var span = $('<span class="validetta-bubble validetta-bubble--bottom" style="margin-left: 13px;"/>');
+            if ($(this).attr('data-validetta-after')) {
+                span.text(message).insertAfter($(this).siblings($(this).attr('data-validetta-after')));
+            } else {
+                span.text(message).insertAfter($(this));
+            }
+        }
+        $.fn.clearInvalid = function() {
+            $(this).siblings('.validetta-bubble').remove();
+        }
+
+
         // If 'std' attribute is not empty - setup additional ajax config
         if (!((indi.std = $('script[std]').attr('std')).length == 0))
             $.ajaxSetup({

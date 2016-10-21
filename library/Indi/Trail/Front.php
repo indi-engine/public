@@ -38,6 +38,42 @@ class Indi_Trail_Front {
         foreach ($sectionRs as $sectionR)
             self::$items[] = new Indi_Trail_Front_Item($sectionR, $sectionRs->count() - ++$i);
 
+        // If
+        if (Indi::uri('action') == 'index') {
+
+            // If current section is not a one of the root-sections,
+            // and parent section's type is 'single-row section'
+            // and parent section has non-empty `where` prop
+            // and compiled version of that prop is not an empty string
+            // and row was found using that compiled version as WHERE clause
+            if (self::$items[0]->section->fsectionId
+                && self::$items[1]->section->type == 's'
+                && strlen(self::$items[1]->section->where)
+                && strlen($majorWHERE = self::$items[1]->section->compiled('where'))
+                && $parentRow = self::$items[1]->model->fetchRow($majorWHERE)) {
+
+                // Get the parent id
+                $id = $parentRow->id;
+
+            // Else if parent section's row's id is given directly via uri
+            } else if (Indi::rexm('int11', Indi::uri('id'))) {
+
+                // Get the parent id
+                $id = Indi::uri('id');
+            }
+
+            // If $id was defined using any of both methods
+            if ($id) {
+
+                // If there is no info about nesting yet, we create an array, where it will be stored
+                if (!is_array($_SESSION['indi']['front']['trail']['parentId']))
+                    $_SESSION['indi']['front']['trail']['parentId'] = array();
+
+                // Save id in session
+                $_SESSION['indi']['front']['trail']['parentId'][self::$items[0]->section->fsectionId] = $id;
+            }
+        }
+
         // Reverse items
         self::$items = array_reverse(self::$items);
     }

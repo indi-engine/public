@@ -123,25 +123,31 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
         // If current trail item relates to current section
         if ($index == 0) {
 
-            // If current section is a non-single-row section, and current action's maintenance is 'row'
-            // (e.g not 'none' or 'rowset'), and there was no id passed within the uri - throw 'Not Found' page
-            if ($this->section->type == 'r' && $this->action->maintenance == 'r' && !Indi::uri('id'))
-                if(!preg_match('/^save|create$/', Indi::uri('action')))
-                    Indi_Trail_Front::$controller->notFound();
-
             // If current action's maintenance is 'none' or 'rowset', e.g is not 'row' - return
             if ($this->action->maintenance != 'r') return;
 
-            // If 'id' uri param exists - setup $majorWHERE clause based on it
-            if (Indi::uri('id')) $majorWHERE = '`id` = "' . Indi::uri('id') . '"';
+            // If current section is a non-single-row section, and there was no id passed within the uri,
+            // and $this->section2action->row is null (backwards compatibility)- throw 'Not Found' page
+            if ($this->section->type == 'r' && !$this->section2action->row && !Indi::uri('id'))
+                if (!preg_match('/^save|create$/', Indi::uri('action')))
+                    Indi_Trail_Front::$controller->notFound();
+
+            // If current section is a non-single-row section
+            if ($this->section->type == 'r' && $this->section2action->row != 'new') {
+
+                // If `section2action` entry's `where` prop - is not an empty string
+                if (strlen($this->section2action->where)) $majorWHERE = $this->section2action->compiled('where');
+
+                // If 'id' uri param exists - setup $majorWHERE clause based on it
+                else if (Indi::uri('id')) $majorWHERE = '`id` = "' . Indi::uri('id') . '"';
 
             // Else if current section's type is 'single-row', and special expression for row identification was set
-            else if ($this->section->type == 's' && strlen($this->section->where))
+            } else if ($this->section->type == 's' && strlen($this->section->where))
 
                 // Setup $majorWHERE clause based on that expression
                 $majorWHERE = $this->section->compiled('where');
 
-            // If there is an id
+            // If we have a clause for row identification
             if ($majorWHERE) {
 
                 // Get primary WHERE clause
@@ -151,17 +157,25 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 // it will mean that that row match all necessary requirements
                 array_unshift($where, $majorWHERE);
 
-                // Try to find a row by given id, that, hovewer, also match all requirements,
-                // mentioned in all other WHERE clause parts
+                // If there is no row found matching all parts of WHERE clause
                 if (!($this->row = $this->model->fetchRow($where))) {
 
-                    // If row was not found, return an error
-                    return I_ACCESS_ERROR_ROW_DOESNT_EXIST;
+                    // If only existing rows are allowed to be operated by current action
+                    if (!$this->section2action->row || $this->section2action->row == 'existing')
+
+                        // Return an error
+                        return I_ACCESS_ERROR_ROW_DOESNT_EXIST;
+
+                    // Else jump to empty row creation
+                    else goto create;
                 }
 
             // Else there was no id passed within uri or special row identification expression, and action is
             // 'form', 'save' or 'create',  we assume that user it trying to add a new row within current section
-            } else if (preg_match('/^form|save|create$/', Indi::uri('action'))) {
+            } else if (preg_match('/^form|save|create$/', Indi::uri('action')) || in($this->section2action->row, 'new,any')) {
+
+                // Label for 'goto'
+                create:
 
                 // Create an empty row object
                 $this->row = $this->model->createRow();
@@ -169,7 +183,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 // Setup several properties within the empty row, e.g if we are trying to create a 'City' row, and
                 // a moment ago we were browsing cities list within Canada - we should autosetup a proper `countryId`
                 // property for that empty 'City' row, for ability to save it as one of Canada's cities
-                for ($i = 1; $i < count(Indi_Trail_Admin::$items) - 1; $i++) {
+                for ($i = 1; $i < count(Indi_Trail_Front::$items); $i++) {
 
                     // Determine the connector field between 'country' and 'city'. Usually it is '<parent-table-name>Id'
                     // but in some custom cases, this may differ. We do custom connector field autosetup only if it was
@@ -180,10 +194,25 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                         ? Indi::trail($i-1)->section->foreign('parentSectionConnector')->alias
                         : Indi::trail($i)->model->table() . 'Id';
 
-                    // Get the connector value from session special place
-                    if ($this->model->fields($connector))
-                        $this->row->$connector = $_SESSION['indi']['front']['trail']['parentId']
-                        [Indi::trail($i)->section->id];
+                    // Get the connector value
+                    if ($this->model->fields($connector)) {
+
+                        // If connection value is presented in session special place
+                        if ($value = $_SESSION['indi']['front']['trail']['parentId'][Indi::trail($i)->section->id])
+
+                            // Assign it
+                            $this->row->$connector = $value;
+
+                        // Else if trail item's section is a 'single-row' section - find that single row
+                        else if (Indi::trail($i)->section->type == 's'
+                            && strlen(Indi::trail($i)->section->where)
+                            && strlen($majorWHERE = Indi::trail($i)->section->compiled('where'))
+                            && $parentRow = Indi::trail($i)->model->fetchRow($majorWHERE)) {
+
+                            // Assign found single row's id as a connector value
+                            $this->row->$connector = $parentRow->id;
+                        }
+                    }
                 }
             }
 

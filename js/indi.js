@@ -135,6 +135,88 @@ $(document).ready(function(){
             });
         });
 
+
+        indi.actionfailed = function(result, formS) {
+            var action = {}, cmp, certainFieldMsg, wholeFormMsg = [], mismatch, errorByFieldO, trigger, msg;
+
+            // Parse response text
+            action.result = result;
+
+            // If no info about invalid fields got from the response - return
+            if (!action.result || !action.result.mismatch) return;
+
+            // Shortcut to action.result.mismatch
+            mismatch = action.result.mismatch;
+
+            // Error messages storage
+            errorByFieldO = mismatch.errors;
+
+            // Detect are error related to current form fields, or related to fields of some other entry,
+            // that is set up to be automatically updated (as a trigger operation, queuing after the primary one)
+            trigger = mismatch.entity.title != $(formS).attr('data-model-title')
+                || ((mismatch.entity.entry || '') != $(formS).attr('data-entry-id'));
+
+            Object.keys(errorByFieldO).forEach(function(i){
+
+                // If mismatch key starts with a '#' symbol, we assume that message, assigned
+                // under such key - is not related to any certain field within form, so we
+                // collect al such messages for them to be bit later displayed within Ext.MessageBox
+                if (i.substring(0, 1) == '#' || trigger) wholeFormMsg.push(errorByFieldO[i]);
+
+                // Else if mismatch key doesn't start with a '#' symbol, we assume that message, assigned
+                // under such key - is related to some certain field within form, so we get that field's
+                // component and mark it as invalid
+                else if (((cmp = $(formS + ' [name="' + i + '"]')) && cmp.length) || ((cmp = $(formS + ' [name="' + i + '[]"]')) && cmp.length)) {
+
+                    // Get the mismatch message
+                    certainFieldMsg = errorByFieldO[i];
+
+                    // If mismatch message is a string
+                    if (typeof certainFieldMsg == 'string')
+
+                    // Cut off field title mention from message
+                        certainFieldMsg = certainFieldMsg.replace('"' + cmp.attr('placeholder') + '"', '').replace(/""/g, '');
+
+                    // Mark field as invalid
+                    cmp.first().markInvalid(certainFieldMsg);
+
+                    // Error bubble should be removed once field got focused again
+                    cmp.on('focus', null, function(){
+                        $(this).clearInvalid();
+                    });
+
+                    // If field is currently hidden - we duplicate erroк message for it to be shown within
+                    // Ext.MessageBox, additionally
+                    if (cmp.hidden) wholeFormMsg.push(errorByFieldO[i]);
+
+                    // Else mismatch message is related to field, that currently, for some reason, is not available
+                    // within the form - push that message to the wholeFormMsg array
+                } else wholeFormMsg.push(errorByFieldO[i]);
+            });
+
+            // If we collected at least one error message, that is related to the whole form rather than
+            // some certain field - use an Ext.MessageBox to display it
+            if (wholeFormMsg.length) {
+
+                msg = (wholeFormMsg.length > 1 || trigger ? '» ' : '') + wholeFormMsg.join('<br><br>» ');
+
+                // If this is a mismatch, caused by background php-triggers
+                if (trigger) msg = 'При выполнении вашего запроса, одна из автоматически производимых операций, в частности над записью типа "'
+                    + mismatch.entity.title + '"'
+                    + (parseInt(mismatch.entity.entry) ? ' [id#' + mismatch.entity.entry + ']' : '')
+                    + ' - выдала следующие ошибки: <br><br>' + msg;
+
+                // Show message box
+                /*Ext.MessageBox.show({
+                 title: Indi.lang.I_ERROR,
+                 msg: msg,
+                 buttons: Ext.MessageBox.OK,
+                 icon: Ext.MessageBox.ERROR
+                 });*/
+                alert(msg.replace(/<br>/g, "\n"));
+            }
+        }
+
         // If 'std' attribute is not empty - setup additional ajax config
         if (!((indi.std = $('script[std]').attr('std')).length == 0))
             $.ajaxSetup({

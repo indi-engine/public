@@ -156,6 +156,7 @@ $(document).ready(function(){
             trigger = mismatch.entity.title != $(formS).attr('data-model-title')
                 || ((mismatch.entity.entry || '') != $(formS).attr('data-entry-id'));
 
+            var j = 0;
             Object.keys(errorByFieldO).forEach(function(i){
 
                 // If mismatch key starts with a '#' symbol, we assume that message, assigned
@@ -174,23 +175,33 @@ $(document).ready(function(){
                     // If mismatch message is a string
                     if (typeof certainFieldMsg == 'string')
 
-                    // Cut off field title mention from message
+                        // Cut off field title mention from message
                         certainFieldMsg = certainFieldMsg.replace('"' + cmp.attr('placeholder') + '"', '').replace(/""/g, '');
-
-                    // Mark field as invalid
-                    cmp.first().markInvalid(certainFieldMsg);
-
-                    // Error bubble should be removed once field got focused again
-                    cmp.on('focus', null, function(){
-                        $(this).clearInvalid();
-                    });
 
                     // If field is currently hidden - we duplicate erroк message for it to be shown within
                     // Ext.MessageBox, additionally
-                    if (cmp.hidden) wholeFormMsg.push(errorByFieldO[i]);
+                    if (cmp.css('display') == 'none') wholeFormMsg.push(errorByFieldO[i]);
+                    
+                    // Else
+                    else {
+                    
+                        // Mark field as invalid
+                        cmp.first().markInvalid(certainFieldMsg);
 
-                    // Else mismatch message is related to field, that currently, for some reason, is not available
-                    // within the form - push that message to the wholeFormMsg array
+                        // Focus field
+                        if (!j) cmp.focus();
+                        
+                        // Error bubble should be removed once field got focused again
+                        cmp.on('focus', null, function(){
+                            $(this).clearInvalid();
+                        });
+                        
+                        // Increment visible invalid-fields counter
+                        j++;
+                    }
+                    
+                // Else mismatch message is related to field, that currently, for some reason, is not available
+                // within the form - push that message to the wholeFormMsg array
                 } else wholeFormMsg.push(errorByFieldO[i]);
             });
 

@@ -289,8 +289,27 @@ class Indi_Controller_Front extends Indi_Controller {
         // Render it
         $out = Indi::view()->render($view);
 
+        // Prepare out
+        $out = $this->prepareOut($out);
+
+        // Flush $out and die, or return $out
+        if ($die) die($out); else return $out;
+	}
+
+	public function __call($action, $argumentts) {
+
+	}
+
+    /**
+     * Prepare html output
+     *
+     * @param $out
+     * @return array|mixed|string
+     */
+    public function prepareOut($out) {
+
         // If seo url mode is turned on - convert the urls
-		if (Indi::ini()->general->seoUri) $out = Indi_Uri::sys2seo($out);
+        if (Indi::ini()->general->seoUri) $out = Indi_Uri::sys2seo($out);
 
         // Nest static page uris
         $out = Indi_Uri::nspu($out);
@@ -313,13 +332,9 @@ class Indi_Controller_Front extends Indi_Controller {
         // If $this->encoding is not 'utf-8', convert output to needed encoding
         if (strtolower($this->encoding) != 'utf-8') $out = iconv('utf-8', $this->encoding, $out);
 
-        // Flush $out and die, or return $out
-        if ($die) die($out); else return $out;
-	}
-
-	public function __call($action, $argumentts) {
-
-	}
+        // Return
+        return $out;
+    }
 
     /**
      * Replace all non-https links to https

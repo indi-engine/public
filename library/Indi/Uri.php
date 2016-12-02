@@ -326,7 +326,8 @@ class Indi_Uri extends Indi_Uri_Base {
     }
 
     public static function sys2seo($sys, $cr = false, $reg = ''){
-        preg_match_all($reg ? $reg: '/(href|url)="([0-9a-z\/#]+)"/', $sys, $matches);
+        //preg_match_all($reg ? $reg: '/(href|url)="([0-9a-z\/#]+)"/', $sys, $matches);
+        preg_match_all($reg ? $reg: '/(href|url)="([^"\.]+)"/', $sys, $matches);
         $uri = $matches[2];
         $db = Indi::db();
         $furi = array();

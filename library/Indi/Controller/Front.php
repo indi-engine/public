@@ -144,6 +144,9 @@ class Indi_Controller_Front extends Indi_Controller {
         // Static blocks
         Indi::view()->blocks = Indi::blocks();
 
+        // Adjust trail
+        $this->adjustTrail();
+
         // Fetch rowset if need
         $this->rowset();
     }

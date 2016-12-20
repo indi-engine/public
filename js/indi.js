@@ -180,16 +180,23 @@ $(document).ready(function(){
 
                     // If field is currently hidden - we duplicate erroк message for it to be shown within
                     // Ext.MessageBox, additionally
-                    if (cmp.css('display') == 'none') wholeFormMsg.push(errorByFieldO[i]);
+                    if (cmp.css('display') == 'none' && !cmp.attr('data-validetta-after')) wholeFormMsg.push(errorByFieldO[i]);
                     
                     // Else
                     else {
                     
                         // Mark field as invalid
-                        cmp.first().markInvalid(certainFieldMsg);
+                        if (cmp.attr('data-validetta-after')) {
+                            $(cmp.attr('data-validetta-after')).markInvalid(certainFieldMsg);
+                        } else {
+                            cmp.first().markInvalid(certainFieldMsg);
+                        }
 
                         // Focus field
-                        if (!j) cmp.focus();
+                        if (!j) {
+                            $.scrollTo(cmp.attr('data-validetta-after') || cmp);
+                            cmp.focus();
+                        }
                         
                         // Error bubble should be removed once field got focused again
                         cmp.on('focus', null, function(){

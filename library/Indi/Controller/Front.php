@@ -600,4 +600,34 @@ class Indi_Controller_Front extends Indi_Controller {
         // Flush response
         if ($return) return $response; else jflush($response);
     }
+
+    /**
+     * Here we override default method, for ability to pick filter values right from $_GET
+     * rather than from $GET['search']
+     *
+     * @param string $FROM
+     * @param string $search
+     * @return array
+     */
+    public function filtersWHERE($FROM = '', $search = '') {
+
+        // If $_GET['search'] is not explicitly given, walk through other $_GET params
+        if (!Indi::get()->search) foreach (Indi::get() as $key => $value) {
+
+            // If param name is either 'sort', 'limit' or 'page' - continue
+            if (in($key, ar('sort,limit,page,keyword'))) continue;
+
+            // If $_GET param name not match any existing field - continue
+            if (!Indi::trail()->model->fields($key)) continue;
+
+            // If $value is not an empty - create an array, and append that array into $search array
+            if (strlen($value)) $search[] = array($key => $value);
+        }
+
+        // If some $_GET params can be used as filters - use them
+        if ($search) $search = json_encode($search);
+
+        // Call parent
+        return parent::filtersWHERE($FROM, $search);
+    }
 }

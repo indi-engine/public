@@ -4,6 +4,20 @@ $(document).ready(function(){
         // Setup default value for indi.std property
         indi.std = '';
 
+        //
+        indi.lang = {
+            I_YES: 'Да',
+            I_NO: 'Нет',
+            I_ERROR: 'Ошибка',
+            I_MSG: 'Сообщение',
+            I_BACK: 'Вернуться',
+            I_SAVE: 'Сохранить',
+            I_CLOSE: 'Закрыть',
+            I_ACTION_DELETE_CONFIRM_TITLE: 'Подтверждение',
+            I_ACTION_DELETE_CONFIRM_MSG: 'Вы уверены что хотите удалить запись',
+            name: 'ru'
+        };
+
         /**
          * Quotes string that later will be used in regular expression.
          *
@@ -247,6 +261,285 @@ $(document).ready(function(){
             $(this).siblings('.validetta-bubble').remove();
         }
 
+        /**
+         * Detect json-stringified error messages, wrapped with <error/> tag, within the raw responseText,
+         * convert each error to JSON-object, and return an array of such objects
+         *
+         * @param rt Response text, for trying to find errors in
+         * @return {Array} Found errors
+         */
+        indi.serverErrorObjectA = function(rt, entitiesEncoded) {
+
+            // If response text is empty - return false
+            if (!rt.length) return ['Empty response'];
+
+            // If `entitiesEncoded` arg is `true`, we decode back htmlentities
+            if (entitiesEncoded) rt = rt.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+
+            // Define variables
+            var errorA = [], errorI;
+
+            // Pick errors
+            $('<response>'+rt+'</response>').find('error').each(function(){
+                if (errorI = JSON.parse($(this).text())) errorA.push(errorI);
+            });
+
+            // Return errors
+            return errorA;
+        };
+
+        /**
+         * Ensure <error>-element will be stripped from response
+         */
+        $.ajaxSetup({
+            converters: {
+                'text json': function(str){
+                    return JSON.parse(str.split('</error>').pop())
+                }
+            }
+        });
+
+        /**
+         * Builds a string representation of a given error objects, suitable for use as Ext.MessageBox contents
+         *
+         * @param {Array} serverErrorObjectA
+         * @return {Array}
+         */
+        indi.serverErrorStringA = function(serverErrorObjectA) {
+
+            // Define auxilliary variables
+            var errorSA = [], typeO = {1: 'PHP Fatal error', 2: 'PHP Warning', 4: 'PHP Parse error', 0: 'MySQL query', 3: 'MYSQL PDO'},
+                type, seoA = serverErrorObjectA;
+
+            // Convert each error message object to a string
+            for (var i = 0; i < seoA.length; i++)
+                errorSA.push(((type = typeO[seoA[i].code]) ? type + ': ' : '') + seoA[i].text + ' at ' +
+                    seoA[i].file + ' on line ' + seoA[i].line);
+
+            // Return error strings array
+            return errorSA;
+        };
+
+        /**
+         * Common function for handling ajax/iframe responses
+         * It detects <error>...</error> elements in responseText prop of `response` arg,
+         * show them along with trimming them from responseText. It also detects whether
+         * the trimmed responseText can be decoded into JSON, and if so, does it have
+         * `mismatch`, `confirm` and `success` props and if so - handle them certain ways
+         * and return `success` prop that can be undefined, null, boolean or other value
+         *
+         * @param response
+         * @return {Boolean}
+         */
+        indi.parseResponse = function(event, response, options) {
+
+            var json, wholeFormMsg = [], mismatch, errorByFieldO, msg,
+                form = response && response.scope && response.scope.form ? response.scope.form : null, trigger,
+                certainFieldMsg, cmp, seoA = Indi.serverErrorObjectA(response.responseText), sesA,
+                logger = console && (console.log || console.error), boxA = [], urlOwner = form || options;
+
+            // Remove 'answer' param, if it exists within url
+            urlOwner.url = urlOwner.url.replace(/\banswer=(ok|no|cancel)/, '');
+
+            // todo: Hide loadmask
+
+            // Try to detect error messages, wrapped in <error/> tag, within responseText
+            if (seoA.length) {
+
+                // Build array of error strings from error objects
+                sesA = Indi.serverErrorStringA(seoA);
+
+                // Write php-errors to the console, additionally
+                if (logger) for (var i in sesA) logger(sesA[i]);
+
+                // Show errors within a message box
+                boxA.push({
+                    title: 'Server error',
+                    msg: sesA.join('<br><br>'),
+                    buttons: 'Ext.Msg.OK',
+                    icon: 'Ext.MessageBox.ERROR',
+                    modal: true
+                });
+
+                // Strip errors from response
+                response.responseText = response.responseText.split('</error>').pop();
+            }
+
+            // Parse response text as JSON, and if no success - return
+            try { json = JSON.parse(response.responseText); } catch (e) {
+
+                // Show box
+                if (boxA.length) indi.mbox(boxA[0]);
+
+                // Return success as true or false
+                return boxA.length ? false : true;
+            }
+
+            // The the info about invalid fields from the response, and mark the as invalid
+            if ('mismatch' in json && $.isPlainObject(json.mismatch)) {
+
+                // Shortcut to json.mismatch
+                mismatch = json.mismatch;
+
+                // Error messages storage
+                errorByFieldO = mismatch.errors;
+
+                // Detect are error related to current form fields, or related to fields of some other entry,
+                // that is set up to be automatically updated (as a trigger operation, queuing after the primary one)
+                trigger = form ? mismatch.entity.title != form.owner.ctx().ti().model.title || mismatch.entity.entry != form.owner.ctx().ti().row.id : true;
+
+                // Collect all messages for them to be bit later displayed within Ext.MessageBox
+                Object.keys(errorByFieldO).forEach(function(i){
+
+                    // If mismatch key starts with a '#' symbol, we assume that message, assigned
+                    // under such key - is not related to any certain field within form, so we
+                    // collect al such messages for them to be bit later displayed within Ext.MessageBox
+                    if (i.substring(0, 1) == '#' || trigger) wholeFormMsg.push(errorByFieldO[i]);
+
+                    // Else if mismatch key doesn't start with a '#' symbol, we assume that message, assigned
+                    // under such key - is related to some certain field within form, so we get that field's
+                    // component and mark it as invalid
+                    else if (form && (cmp = Ext.getCmp(form.owner.ctx().bid() + '-field$' + i))) {
+
+                        // Get the mismatch message
+                        certainFieldMsg = errorByFieldO[i];
+
+                        // If mismatch message is a string
+                        if (Ext.isString(certainFieldMsg))
+
+                        // Cut off field title mention from message
+                            certainFieldMsg = certainFieldMsg.replace('"' + cmp.fieldLabel + '"', '').replace(/""/g, '');
+
+                        // Mark field as invalid
+                        cmp.markInvalid(certainFieldMsg);
+
+                        // If field is currently hidden - we duplicate error message for it to be shown within
+                        // Ext.MessageBox, additionally
+                        if (cmp.hidden) wholeFormMsg.push(errorByFieldO[i]);
+
+                        // Else mismatch message is related to field, that currently, for some reason, is not available
+                        // within the form - push that message to the wholeFormMsg array
+                    } else wholeFormMsg.push(errorByFieldO[i]);
+                });
+
+                // If we collected at least one error message, that is related to the whole form rather than
+                // some certain field - use an Ext.MessageBox to display it
+                if (wholeFormMsg.length) {
+
+                    msg = (wholeFormMsg.length > 1 || trigger ? '&raquo; ' : '') + wholeFormMsg.join('<br><br>&raquo; ');
+
+                    // If this is a mismatch, caused by background php-triggers
+                    if (trigger) msg = 'При выполнении вашего запроса, одна из автоматически производимых операций, в частности над записью типа "'
+                        + mismatch.entity.title + '"'
+                        + (parseInt(mismatch.entity.entry) ? ' [id#' + mismatch.entity.entry + ']' : '')
+                        + ' - выдала следующие ошибки: <br><br>' + msg;
+
+                    // Show message box
+                    boxA.push({
+                        title: indi.lang.I_ERROR,
+                        msg: msg,
+                        buttons: 'Ext.MessageBox.OK',
+                        icon: 'Ext.MessageBox.ERROR',
+                        modal: true
+                    });
+                }
+
+            // Else if `confirm` prop is set - show it within Ext.MessageBox
+            } else if ('confirm' in json) boxA.push({
+                title: indi.lang.I_MSG,
+                msg: json.msg,
+                buttons: 'Ext.Msg.OKCANCEL',
+                icon: 'Ext.Msg.QUESTION',
+                modal: true,
+                fn: function(answer) {
+
+                    // Append new answer param
+                    urlOwner.url = urlOwner.url.split('?')[0] + '?answer=' + answer
+                        + (urlOwner.url.split('?')[1] ? '&' + urlOwner.url.split('?')[1] : '');
+
+                    // If answer is 'ok' show load mask
+                    //if (answer == 'ok') Indi.loadmask.show();
+
+                    // Make new request
+                    if (form) form.owner.submit({
+                        submitEmptyText: false,
+                        dirtyOnly: true
+                    }); else $.ajax(options);
+                }
+
+            // Else if `success` prop is set
+            }); else if ('success' in json && 'msg' in json) {
+
+                // If `msg` prop is set - show it within Ext.MessageBox
+                boxA.push({
+                    title: indi.lang[json.success ? 'I_MSG' : 'I_ERROR'],
+                    msg: json.msg,
+                    buttons: 'Ext.Msg.OK',
+                    icon: "Ext.Msg[json.success ? 'INFO' : 'WARNING']",
+                    modal: true
+                });
+            }
+
+            // If no boxes should be shown - return
+            if (!boxA.length) return json.success;
+
+            // Ensure second box will be shown after first box closed
+            if (boxA[1]) boxA[0].fn = function() { indi.mbox(boxA[1]); }
+
+            // Show first box
+            indi.mbox(boxA[0]);
+
+            // Return
+            return json.success;
+        };
+
+        /**
+         * Show dialog box
+         *
+         * @param cfg
+         */
+        indi.mbox = function(cfg) {
+            var buttonS = cfg.buttons.split('.').pop(), buttonA = [], i, possible = ['OK', 'CANCEL', 'YES', 'NO'];
+
+            // Build buttons array
+            for (i in possible)
+                if (buttonS.match(new RegExp(possible[i])))
+                    buttonA.push({
+                        text: possible[i],
+                        click: function(e) {
+                            var answer = $(e.target).text().toLowerCase();
+                            $(this).dialog('destroy');
+                            if (cfg.fn) cfg.fn.call(this, answer);
+                        }
+                    });
+
+            if ($.fn.dialog) {
+
+                // Show message box
+                $('<div id="dialog" title="'+cfg.title+'">'+cfg.msg+'</div>').dialog({
+                    dialogClass: "no-close",
+                    buttons: buttonA,
+                    modal: cfg.modal,
+                    width: 'auto',
+                    maxWidth: '50%'
+                });
+
+            } else {
+                if (buttonS == 'OKCANCEL') {
+                    if (confirm(cfg.msg)) {
+                        if (cfg.fn) cfg.fn.call(this, 'ok');
+                    } else {
+                        if (cfg.fn) cfg.fn.call(this, 'cancel');
+                    }
+                } else {
+                    alert(cfg.msg);
+                    if (cfg.fn) cfg.fn.call(this);
+                }
+            }
+        }
+
+        // Post-process response to pick and show errors or other messages
+        $(document).ajaxComplete(indi.parseResponse);
 
         // If 'std' attribute is not empty - setup additional ajax config
         if (!((indi.std = $('script[std]').attr('std')).length == 0))
@@ -267,7 +560,6 @@ $(document).ready(function(){
 
         return indi;
     }(window.Indi || {});
-
 });
 
 

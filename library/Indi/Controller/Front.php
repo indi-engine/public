@@ -295,8 +295,17 @@ class Indi_Controller_Front extends Indi_Controller {
         // Prepare out
         $out = $this->prepareOut($out);
 
-        // Flush $out and die, or return $out
-        if ($die) die($out); else return $out;
+        // If $die arg is not set or true
+        if ($die) {
+
+            // Send HTTP 200 OK status
+            header('HTTP/1.1 200 OK');
+
+            // Flush out and die
+            die($out);
+
+        // Else return $out
+        } else return $out;
 	}
 
 	public function __call($action, $argumentts) {

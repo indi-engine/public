@@ -298,8 +298,17 @@ class Indi_Controller_Front extends Indi_Controller {
         // If $die arg is not set or true
         if ($die) {
 
-            // Send HTTP 200 OK status
-            header('HTTP/1.1 200 OK');
+            // If we are here because user, that is not currently signed-in
+            // was trying to reach something allowed only to signed-in users
+            if ($_SESSION['authRequiredRequest']['code'] == 401) {
+
+                // Unset unauthorised flag, as it's aim was to
+                // keep in mind the fact of an user's unauthorized try
+                // for just a single time, and we've already sent 401 code earlier
+                unset($_SESSION['authRequiredRequest']['code']);
+
+            // Else send HTTP 200 OK status
+            } else header('HTTP/1.1 200 OK');
 
             // Flush out and die
             die($out);

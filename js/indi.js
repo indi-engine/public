@@ -64,16 +64,21 @@ $(document).ready(function(){
         /**
 		 * Auth using vkontakte
 		 */
-		indi.auth.vk = function() {
+		indi.auth.vk = function(callback) {
+
+            // Default callback
+            callback = callback || function(data) {
+                eval(data);
+            }
+
+            // Auth
 			VK.Auth.login(function (response) {
 				if (response.session) {
 					VK.Api.call('getUserInfo', {}, function(r) {
 						if (r.response) {
-							MYid=r.response['user_id'];
+							MYid = r.response['user_id'];
 							VK.Api.call('getProfiles', {uids: MYid, fields: 'nickname,photo_big',format: 'JSON'}, function(z) {
-								$.post('/', {authType: 'vk', params: z.response[0]}, function(data) {
-									eval(data);
-								});
+								$.post('/', {authType: 'vk', params: z.response[0]}, callback);
 							});
 						} 
 					});	
@@ -368,6 +373,41 @@ $(document).ready(function(){
             // Parse response text as JSON, and if no success - return
             try { json = JSON.parse(response.responseText); } catch (e) {
 
+                // If response status code is 401
+                if (response.status == 401) {
+
+                    // Show errors within a message box
+                    boxA.push({
+                        title: '',
+                        msg: response.responseText,
+                        modal: true,
+                        create: function(e) {
+                            $(e.target).find('[indi-auth-sn]').removeAttr('onclick').click(function(){
+                                var sn = $(this).attr('indi-auth-sn');
+
+                                // Try to auth using certain social network
+                                Indi.auth[sn](function(){
+
+                                    // Once auth succeeded - retry original request
+                                    if (form) form.owner.submit({
+                                        submitEmptyText: false,
+                                        dirtyOnly: true
+                                    }); else $.ajax(options);
+                                });
+
+                                // Destroy current dialog
+                                $(e.target).dialog('destroy');
+
+                                // Return false
+                                return false;
+                            });
+                        }
+                    });
+                }
+
+                // Ensure second box will be shown after first box closed
+                if (boxA[1]) boxA[0].fn = function() { indi.mbox(boxA[1]); }
+
                 // Show box
                 if (boxA.length) indi.mbox(boxA[0]);
 
@@ -499,7 +539,7 @@ $(document).ready(function(){
          * @param cfg
          */
         indi.mbox = function(cfg) {
-            var buttonS = cfg.buttons.split('.').pop(), buttonA = [], i, possible = ['OK', 'CANCEL', 'YES', 'NO'];
+            var buttonS = (cfg.buttons || '').split('.').pop(), buttonA = [], i, possible = ['OK', 'CANCEL', 'YES', 'NO'];
 
             // Build buttons array
             for (i in possible)
@@ -521,7 +561,8 @@ $(document).ready(function(){
                     buttons: buttonA,
                     modal: cfg.modal,
                     width: 'auto',
-                    maxWidth: '50%'
+                    maxWidth: '50%',
+                    create: cfg.create
                 });
 
             } else {

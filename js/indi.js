@@ -90,13 +90,18 @@ $(document).ready(function(){
 		/**
 		 * Auth using facebook
 		 */
-		indi.auth.fb = function(){
-			FB.login(function (response) {
+		indi.auth.fb = function(callback){
+
+            // Default callback
+            callback = callback || function(data) {
+                eval(data);
+            }
+
+            // Auth
+            FB.login(function (response) {
 				if (response.authResponse) {
 					FB.api('/me', function(response) {
-						$.post('/', {authType: 'fb', params: response}, function(data){
-							eval(data);
-						});
+						$.post('/', {authType: 'fb', params: response}, callback);
 					});
 				}
 			});

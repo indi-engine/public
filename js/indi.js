@@ -13,6 +13,7 @@ $(document).ready(function(){
             I_BACK: 'Вернуться',
             I_SAVE: 'Сохранить',
             I_CLOSE: 'Закрыть',
+            I_AUTH: 'Авторизация',
             I_ACTION_DELETE_CONFIRM_TITLE: 'Подтверждение',
             I_ACTION_DELETE_CONFIRM_MSG: 'Вы уверены что хотите удалить запись',
             name: 'ru'
@@ -381,10 +382,13 @@ $(document).ready(function(){
                 // If response status code is 401
                 if (response.status == 401) {
 
+                    // Shortcut to .xhr node within responseText
+                    var xhrEl = $(response.responseText).find('.xhr');
+
                     // Show errors within a message box
                     boxA.push({
-                        title: '',
-                        msg: response.responseText,
+                        title: indi.lang.I_AUTH,
+                        msg: xhrEl.length ? xhrEl.html() : response.responseText,
                         modal: true,
                         create: function(e) {
                             $(e.target).find('[indi-auth-sn]').removeAttr('onclick').click(function(){

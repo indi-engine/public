@@ -475,7 +475,7 @@ $(document).ready(function(){
                 // some certain field - use an Ext.MessageBox to display it
                 if (wholeFormMsg.length) {
 
-                    msg = (wholeFormMsg.length > 1 || trigger ? '&raquo; ' : '') + wholeFormMsg.join('<br><br>&raquo; ');
+                    msg = (wholeFormMsg.length > 1 || trigger ? '&raquo; ' : '') + wholeFormMsg.join('<br>&raquo; ');
 
                     // If this is a mismatch, caused by background php-triggers
                     if (trigger) msg = 'При выполнении вашего запроса, одна из автоматически производимых операций, в частности над записью типа "'
@@ -586,6 +586,57 @@ $(document).ready(function(){
                     if (cfg.fn) cfg.fn.call(this);
                 }
             }
+        }
+
+        indi.form = function(config) {
+
+            var defaults = {
+                form: 'form',
+                action: null,
+                submit: '.i-submit',
+                listeners: {
+                    beforeSubmit: function() {
+
+                    }
+                }
+            }, options = $.extend({}, defaults);
+
+            if (typeof config == 'string') options.form = config;
+            else if (typeof config == 'object') options = $.extend({}, defaults, config);
+
+            var f = $(options.form); if (f.prop('tagName') != 'FORM') return indi.mbox({msg: 'Это не форма'});
+
+            f.find(options.submit).click(function(){
+                f.submit();
+            });
+
+            f.submit(function(){
+                //indi.mbox({msg: 'Попытка отправить форму'});
+                if (f.find('input[type="file"]').length) {
+                    f.append('<iframe name="i-submit-iframe"></iframe>');
+                    f.attr('target', 'i-submit-iframe');
+                    $('iframe[name="i-submit-iframe"]').load(function(){
+
+                        // Get selector of a form, that current iframe is a target for
+                        var formS = 'form[target="' + $(this).attr('name') +'"]';
+
+                        // Remove previous errors
+                        $(formS).find('.validetta-bubble').remove();
+
+                        // JSON-decode iframe contents
+                        var result = JSON.parse($(this).contents().find('body').text());
+
+                    });
+                } else {
+                    $.ajax({
+                        url: options.action || f.attr('action'),
+                        method: options.method || f.attr('method'),
+                        data: f.serialize(),
+                        context: f
+                    });
+                }
+                return false;
+            });
         }
 
         // Post-process response to pick and show errors or other messages

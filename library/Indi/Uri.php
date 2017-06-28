@@ -124,6 +124,11 @@ class Indi_Uri extends Indi_Uri_Base {
         // Build the controller class name
         $controllerClass = ucfirst(Indi::uri('section')) . 'Controller';
 
+        // Replace '-[a-z]' with '-[A-Z]'
+        $controllerClass = preg_replace_callback('/-([a-z]+)/', function($m){
+            return ucfirst($m[1]);
+        }, $controllerClass);
+
         // If there is no such a controller
         if (!class_exists($controllerClass)) {
 

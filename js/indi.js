@@ -218,16 +218,16 @@ $(document).ready(function(){
                         }
 
                         // Focus field
-                        if (!j) {
-                            $.scrollTo(cmp.attr('data-validetta-after') || cmp);
-                            cmp.focus();
-                        }
+                        if (!j) $.scrollTo(cmp.attr('data-validetta-after') || cmp);
                         
                         // Error bubble should be removed once field got focused again
-                        cmp.on('focus', null, function(){
-                            $(this).clearInvalid();
-                        });
-                        
+                        if (!cmp.attr('has-focus-handler')) {
+                            cmp.attr('has-focus-handler', 'true');
+                            cmp.on('focus', null, function(){
+                                $(this).clearInvalid();
+                            });
+                        }
+
                         // Increment visible invalid-fields counter
                         j++;
                     }

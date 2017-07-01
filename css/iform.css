@@ -1,0 +1,27 @@
+form[target^="i-form-target"] iframe[name^="i-form-target"] {
+    display: none;
+}
+.i-field-error {
+    position: absolute;
+    background-color: #cd2e26;
+    color: white;
+    padding: 3px 6px;
+    z-index: 9;
+    margin-top: 0;
+    font-size: 12px;
+    display: block;
+}
+.i-field-error:before {
+    content: '';
+    position: absolute;
+    display: block;
+    height: 0;
+    width: 0;
+    border-width: 4px;
+    border-style: solid;
+}
+.i-field-error:before {
+    top: -7px;
+    left: 10px;
+    border-color: transparent transparent #cd2e26 transparent;
+}

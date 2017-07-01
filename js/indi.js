@@ -268,8 +268,25 @@ $(document).ready(function(){
                 span.text(message).insertAfter($(this));
             }
         }
+
         $.fn.clearInvalid = function() {
             $(this).siblings('.validetta-bubble').remove();
+        }
+
+        $.fn.ierror = function(error) {
+
+            // If `error` arg is null/false/empty/zero - remove error message from element
+            if (!error) $(this).siblings('.i-field-error').remove();
+
+            // Else
+            else {
+
+                // Prepare error message element
+                var span = $('<span class="i-field-error"/>'), after = $(this).attr('i-field-error-after');
+
+                // Append span, containing error message
+                span.text(error).insertAfter(after ? $(this).siblings(after) : $(this));
+            }
         }
 
         /**
@@ -344,10 +361,9 @@ $(document).ready(function(){
          */
         indi.parseResponse = function(event, response, options) {
 
-            var json, wholeFormMsg = [], mismatch, errorByFieldO, msg,
-                form = response && response.scope && response.scope.form ? response.scope.form : null, trigger,
+            var json, wholeFormMsg = [], mismatch, errorByFieldO, msg, form = options.form, trigger,
                 certainFieldMsg, cmp, seoA = Indi.serverErrorObjectA(response.responseText), sesA,
-                logger = console && (console.log || console.error), boxA = [], urlOwner = form || options;
+                logger = console && (console.log || console.error), boxA = [], urlOwner = options;
 
             // Remove 'answer' param, if it exists within url
             urlOwner.url = urlOwner.url.replace(/\banswer=(ok|no|cancel)/, '');
@@ -398,10 +414,7 @@ $(document).ready(function(){
                                 Indi.auth[sn](function(){
 
                                     // Once auth succeeded - retry original request
-                                    if (form) form.owner.submit({
-                                        submitEmptyText: false,
-                                        dirtyOnly: true
-                                    }); else $.ajax(options);
+                                    if (form) form.submit(); else $.ajax(options);
                                 });
 
                                 // Destroy current dialog
@@ -435,7 +448,7 @@ $(document).ready(function(){
 
                 // Detect are error related to current form fields, or related to fields of some other entry,
                 // that is set up to be automatically updated (as a trigger operation, queuing after the primary one)
-                trigger = form ? mismatch.entity.title != form.owner.ctx().ti().model.title || mismatch.entity.entry != form.owner.ctx().ti().row.id : true;
+                trigger = form ? mismatch.entity.table + '-' + mismatch.entity.entry != options.row : true;
 
                 // Collect all messages for them to be bit later displayed within Ext.MessageBox
                 Object.keys(errorByFieldO).forEach(function(i){
@@ -448,23 +461,21 @@ $(document).ready(function(){
                     // Else if mismatch key doesn't start with a '#' symbol, we assume that message, assigned
                     // under such key - is related to some certain field within form, so we get that field's
                     // component and mark it as invalid
-                    else if (form && (cmp = Ext.getCmp(form.owner.ctx().bid() + '-field$' + i))) {
+                    else if (form && (cmp = (form.find('[name="' + i + '[]"]')[0] || form.find('[name="' + i + '"]')[0]))) {
 
                         // Get the mismatch message
                         certainFieldMsg = errorByFieldO[i];
 
-                        // If mismatch message is a string
-                        if (Ext.isString(certainFieldMsg))
-
-                        // Cut off field title mention from message
-                            certainFieldMsg = certainFieldMsg.replace('"' + cmp.fieldLabel + '"', '').replace(/""/g, '');
+                        // If mismatch message is a string - cut off field title mention from message
+                        /*if (Ext.isString(certainFieldMsg))
+                            certainFieldMsg = certainFieldMsg.replace('"' + cmp.fieldLabel + '"', '').replace(/""/g, '');*/
 
                         // Mark field as invalid
-                        cmp.markInvalid(certainFieldMsg);
+                        $(cmp).ierror(certainFieldMsg);
 
                         // If field is currently hidden - we duplicate error message for it to be shown within
                         // Ext.MessageBox, additionally
-                        if (cmp.hidden) wholeFormMsg.push(errorByFieldO[i]);
+                        if ($(cmp).hidden) wholeFormMsg.push(errorByFieldO[i]);
 
                         // Else mismatch message is related to field, that currently, for some reason, is not available
                         // within the form - push that message to the wholeFormMsg array
@@ -510,10 +521,7 @@ $(document).ready(function(){
                     //if (answer == 'ok') Indi.loadmask.show();
 
                     // Make new request
-                    if (form) form.owner.submit({
-                        submitEmptyText: false,
-                        dirtyOnly: true
-                    }); else $.ajax(options);
+                    if (form) form.submit(); else $.ajax(options);
                 }
 
             // Else if `success` prop is set
@@ -588,8 +596,100 @@ $(document).ready(function(){
             }
         }
 
-        indi.form = function(config) {
+        $.fn.iform = function(options) { $(this).each(function(){
 
+            // Check that we deal only with forms
+            if ($(this).prop('tagName') != 'FORM') return indi.mbox({msg: 'Это не форма'});
+
+            // If `config` arg is a string - we assume it's a form selector
+            if (typeof options == 'function') options = {onSuccess: options};
+
+            // Default options
+            var defaults = {
+                submit: '.i-submit'
+            }
+
+            // Apply default options
+            options = $.extend({}, defaults, options);
+
+            // Make sure that form will be submitted once submit button/link/etc is clicked
+            $(this).find(options.submit).click(function(){
+
+                // Submit form
+                $(this).parents('form').submit();
+
+                // Return false (for case if <a>-element is used as submit button)
+                return false;
+            });
+
+            // Remove error message once field is focused
+            $(this).find('input, select, textarea').focus(function(){
+                $(this).ierror(false);
+            });
+
+            // Bind handler for `submit` event
+            $(this).submit(function(){
+
+                // Remove previous submit-target iframe
+                $(this).find('iframe[name^="i-form-target"]').remove();
+
+                // Generate random name for form target iframe
+                var name = 'i-form-target-' + Math.ceil(Math.random() * Math.pow(10, 5));
+
+                // Append iframe
+                $(this).append('<iframe name="' + name + '"></iframe>');
+
+                // Set form target
+                $(this).attr('target', name);
+
+                // Bind handler on form target iframe's `load` event
+                $(this).find('iframe[name="' + name + '"]').load(function(){
+                    var doc, contentNode, frame = this, success, response = {responseText: '', responseXML: null},
+                        form = $(frame).parents('form');
+
+                    // Try to pick responseText
+                    try {
+
+                        // If iframe's document element is accessible
+                        if (doc = frame.contentWindow.document || frame.contentDocument || window.frames[frame.id].document) {
+                            if (doc.body) {
+
+                                // Response sent as Content-Type: text/json or text/plain. Browser will embed in a <pre> element
+                                // Note: The statement below tests the result of an assignment.
+                                if ((contentNode = doc.body.firstChild) && /pre/i.test(contentNode.tagName))
+                                    response.responseText = contentNode.innerText;
+
+                                // Response sent as Content-Type: text/html. We must still support JSON response wrapped in textarea.
+                                // Note: The statement below tests the result of an assignment.
+                                else if (contentNode = doc.getElementsByTagName('textarea')[0])
+                                    response.responseText = contentNode.value;
+
+                                // Response sent as Content-Type: text/html with no wrapping. Scrape JSON response out of text
+                                else response.responseText = doc.body.innerHTML;
+                            }
+
+                            //in IE the document may still have a body even if returns XML.
+                            response.responseXML = doc.XMLDocument || doc;
+                        }
+                    } catch (e) {}
+
+                    // Remove error messages
+                    form.find('.i-field-error').remove();
+
+                    // Parse response and detect success/failure
+                    success = Indi.parseResponse(null, response, {
+                        form: form,
+                        url: form.attr('action'),
+                        row: form.attr('data-row')
+                    });
+
+                    // Call onSuccess fn
+                    if (success) options.onSuccess.call(form[0]);
+                });
+            });
+        }); }
+
+        indi.form = function(config) {
             var defaults = {
                 form: 'form',
                 action: null,

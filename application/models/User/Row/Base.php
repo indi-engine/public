@@ -17,4 +17,11 @@ class User_Row_Base extends Indi_Db_Table_Row {
         // Remove the same one from registry
         Indi::registry('user', null);
     }
+
+    /**
+     * Alias for logout()
+     */
+    public function signout() {
+        $this->logout();
+    }
 }

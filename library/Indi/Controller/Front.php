@@ -330,7 +330,7 @@ class Indi_Controller_Front extends Indi_Controller {
     public function prepareOut($out) {
 
         // If seo url mode is turned on - convert the urls
-        if (Indi::ini()->general->seoUri) $out = Indi_Uri::sys2seo($out);
+        if (Indi::ini()->general->seoUri) $out = class_exists('Project_Uri') ? Project_Uri::sys2seo($out) : Indi_Uri::sys2seo($out);
 
         // Nest static page uris
         $out = Indi_Uri::nspu($out);

@@ -317,7 +317,7 @@ class Indi_Controller_Front extends Indi_Controller {
         } else return $out;
 	}
 
-	public function __call($action, $argumentts) {
+	public function __call($action, $arguments) {
 
 	}
 

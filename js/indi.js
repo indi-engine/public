@@ -433,6 +433,9 @@ $(document).ready(function(){
                 // Show box
                 if (boxA.length) indi.mbox(boxA[0]);
 
+                // Assign empty json object
+                response.responseJson = {};
+
                 // Return success as true or false
                 return boxA.length ? false : true;
             }
@@ -446,9 +449,9 @@ $(document).ready(function(){
                 // Error messages storage
                 errorByFieldO = mismatch.errors;
 
-                // Detect are error related to current form fields, or related to fields of some other entry,
+                // Detect whether errors are related to current form fields, or related to fields of some other entry,
                 // that is set up to be automatically updated (as a trigger operation, queuing after the primary one)
-                trigger = form ? mismatch.entity.table + '-' + mismatch.entity.entry != options.row : true;
+                trigger = form ? (mismatch.entity ? mismatch.entity.table + '-' + (mismatch.entity.entry || 0) != options.row : false) : true;
 
                 // Collect all messages for them to be bit later displayed within Ext.MessageBox
                 Object.keys(errorByFieldO).forEach(function(i){
@@ -536,6 +539,9 @@ $(document).ready(function(){
                     modal: true
                 });
             }
+
+            // Assign json
+            response.responseJson = json;
 
             // If no boxes should be shown - return
             if (!boxA.length) return json.success;
@@ -683,8 +689,9 @@ $(document).ready(function(){
                         row: form.attr('data-row')
                     });
 
-                    // Call onSuccess fn
-                    if (success) options.onSuccess.call(form[0]);
+                    // Call onSuccess fn, passing response.responseJson as a direct argument
+                    if (success && typeof options.onSuccess == 'function')
+                        options.onSuccess.apply(form[0], [response.responseJson]);
                 });
             });
         }); }

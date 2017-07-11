@@ -292,7 +292,11 @@ class Indi_Uri extends Indi_Uri_Base {
                 $lastId = 0;
                 $shift = 0;
                 for ($i = 0; $i < count($parts); $i++) {
-                    if (isset($aim[$i - 1 + ($parts[0]['alias'] ? 2 : 3) - $shift]) && $component = $models[$parts[$i]['entityId']]->fetchRow('`alias` = "' . $alias . '"' . $where)) {
+                    if (isset($aim[$i - 1 + ($parts[0]['alias'] ? 2 : 3) - $shift]) && $component = $models[$parts[$i]['entityId']]->fetchRow(
+                        (preg_match('/-([0-9]+)$/', $alias)
+                            ? '(`alias` = "' . $alias . '" OR `id` = "' . array_pop(explode('-', $alias)) . '")'
+                            : '`alias` = "' . $alias . '"') . $where)
+                    ) {
 //					echo '`alias` = "' . $alias . '"' . $where . '<br>' . "\n";
                         $lastId = $component->id;
 

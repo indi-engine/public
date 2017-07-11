@@ -299,7 +299,7 @@ $(document).ready(function(){
         indi.serverErrorObjectA = function(rt, entitiesEncoded) {
 
             // If response text is empty - return false
-            if (!rt.length) return ['Empty response'];
+            if (!rt.length) return [];
 
             // If `entitiesEncoded` arg is `true`, we decode back htmlentities
             if (entitiesEncoded) rt = rt.replace(/&lt;/g, '<').replace(/&gt;/g, '>');

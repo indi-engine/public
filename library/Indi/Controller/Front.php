@@ -107,7 +107,7 @@ class Indi_Controller_Front extends Indi_Controller {
         Indi::uri()->dispatch();
     }
 
-	public function preDispatch(){
+	public function preDispatch() {
 
         // Set locale
         if (Indi::ini()->lang->front == 'ru')
@@ -120,7 +120,7 @@ class Indi_Controller_Front extends Indi_Controller {
         $data = $this->auth(Indi::uri('section'), Indi::uri('action'));
 
         // If requested section or action are not registered in the system's database
-        if ($data == I_ACCESS_ERROR_NO_SUCH_SECTION || $data == I_ACCESS_ERROR_NO_SUCH_ACTION) {
+        if (in($data, array(I_ACCESS_ERROR_NO_SUCH_SECTION, I_ACCESS_ERROR_NO_SUCH_ACTION, I_ACCESS_ERROR_NO_SUCH_ACTION_IN_SUCH_SECTION))) {
 
             // Build the controller class name and action method name
             $controllerClass = ucfirst(Indi::uri()->section) . 'Controller';

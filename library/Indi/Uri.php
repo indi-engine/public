@@ -114,9 +114,10 @@ class Indi_Uri extends Indi_Uri_Base {
             }
         }
 
+
         if ($notFound) {
             header('HTTP/1.1 404 Not Found');
-            if (!$staticpageR->id) die(I_NO404_FOUND);
+            if (!$staticpageR->id) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
         } else {
             $this->trailingSlash();
         }

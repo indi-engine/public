@@ -16,6 +16,9 @@ class Indi_View_Helper_SiteMetatag {
      */
     public function siteMetatag($tag) {
 
+        // Check 'Metatag' model exists
+        if (!Indi::model('Metatag', true)) return;
+
         // If metatag data is not yet fetched
         if (self::$_rs === null) {
 

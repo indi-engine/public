@@ -282,7 +282,8 @@ $(document).ready(function(){
             else {
 
                 // Prepare error message element
-                var span = $('<span class="i-field-error"/>'), after = $(this).attr('i-field-error-after');
+                var span = $('<span class="i-field-error"/>'),
+                    after = $(this).data('select2') ? '.select2' : $(this).attr('i-field-error-after');
 
                 // Append span, containing error message
                 span.text(error).insertAfter(after ? $(this).siblings(after) : $(this));
@@ -633,6 +634,11 @@ $(document).ready(function(){
                 $(this).ierror(false);
             });
 
+            // Support .select2
+            $(this).find('.select2').click(function(){
+                $(this).ierror(false);
+            });
+
             // Bind handler for `submit` event
             $(this).submit(function(){
 
@@ -695,6 +701,96 @@ $(document).ready(function(){
                 });
             });
         }); }
+
+        /**
+         * Set field to watch at other fields
+         *
+         * @param cfg
+         */
+        $.fn.iwatch = function(cfg) {
+
+            // For each matching element
+            $(this).each(function(){
+                var me = $(this), form = me.parents('form'); if (!cfg.on || !cfg.on.length) return;
+
+                // Save iwatch config
+                me.data('iwatchCfg', cfg);
+
+                // For each field, mentioned in cfg.on
+                cfg.on.forEach(function(on){
+
+                    // Bind listener for 'change' event
+                    form.find('[name="' + on.name + '"]').change(function(){
+
+                        // Set zero value, if need
+                        if (!('clear' in on) || on.clear) {
+                            me.val(cfg.zeroValue);
+                            if (me.data('select2')) // Not sure why, but it need to set zero value twice for zero value to be surely set
+                                me.select2().val(cfg.zeroValue).select2().val(cfg.zeroValue);
+                            me.ierror();
+                        }
+
+                        // Get data
+                        var info = me.iwatchinfo();
+
+                        // If `disabled` flag was set to `true` - disable field
+                        if (info.disable) me.attr('disabled', 'disabled'); else {
+
+                            // Enable it back otherwise
+                            me.removeAttr('disabled');
+
+                            // Call callback
+                            if (typeof cfg.callback == 'function') cfg.callback.apply(me, [me, info.data]);
+                        }
+                    });
+                });
+            });
+
+            // Return itself
+            return $(this);
+        }
+
+        /**
+         * Get info, related to fields, that current field is set to watch at
+         *
+         * @return {*}
+         */
+        $.fn.iwatchinfo = function() {
+            var me = $(this), cfg = me.data('iwatchCfg'), form = $(this).parents('form'); if (!cfg) return;
+
+            // Empty data object
+            var data = {}, disable = false;
+
+            // Foreach iwatch-field
+            cfg.on.forEach(function(on){
+
+                // Get submit value
+                var v = form.find('[name="' + on.name + '"]').val();
+
+                // Get it's string version
+                var s = v + '';
+
+                // If s is a string, representing an integer number - convert it into interger-type and return
+                if (s.match(/^(-?[1-9][0-9]{0,9}|0)$/)) v = parseInt(s);
+
+                // If s is a string, representing a floating-point number - convert it into float-type and return
+                if (s.match(/^(-?[0-9]{1,8})(\.[0-9]{1,2})?$/)) v = parseFloat(s);
+
+                // If s is a string, representing a floating-point number, containing
+                // up to 10 digits in integer part, optionally prepended with an '-' sign,
+                // and containing up to 3 digits in fractional part - convert it into float-type
+                if (s.match(/^(-?[0-9]{1,10})(\.[0-9]{1,3})?$/)) v = parseFloat(s);
+
+                // Set data
+                data[on.name] = v;
+
+                // Try to set `disable` flag to true
+                if (on.required && !v && !on.enable) disable = true;
+            });
+
+            // Return iwatch-info
+            return {data: data, disable: disable};
+        }
 
         indi.form = function(config) {
             var defaults = {

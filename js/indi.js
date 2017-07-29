@@ -377,7 +377,7 @@ $(document).ready(function(){
                 sesA = Indi.serverErrorStringA(seoA);
 
                 // Write php-errors to the console, additionally
-                if (logger) for (var i in sesA) logger(sesA[i]);
+                try { if (logger) for (var i = 0; i < sesA.length; i++) logger(sesA[i]);} catch (e) {}
 
                 // Show errors within a message box
                 boxA.push({
@@ -657,7 +657,7 @@ $(document).ready(function(){
                     try {
 
                         // If iframe's document element is accessible
-                        if (doc = frame.contentWindow.document || frame.contentDocument || window.frames[frame.id].document) {
+                        if (doc = frame.contentWindow.document || frame.contentDocument || window.frames[$(frame).attr('name')].document) {
                             if (doc.body) {
 
                                 // Response sent as Content-Type: text/json or text/plain. Browser will embed in a <pre> element

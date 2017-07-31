@@ -307,8 +307,9 @@ class Indi_Controller_Front extends Indi_Controller {
                 // for just a single time, and we've already sent 401 code earlier
                 unset($_SESSION['authRequiredRequest']['code']);
 
-            // Else send HTTP 200 OK status
-            } else header('HTTP/1.1 200 OK');
+            // Else send HTTP 200 OK status code, if no status code was yet sent status
+            } else if (!function_exists('http_response_code') || !http_response_code())
+                header('HTTP/1.1 200 OK');
 
             // Flush out and die
             die($out);

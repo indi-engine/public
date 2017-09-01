@@ -491,40 +491,6 @@ class Indi_Controller_Front extends Indi_Controller {
         $this->formActionOdata($for, $post);
     }
 
-    /**
-     * Include additional model's properties into response json, representing rowset data
-     *
-     * @param $propS string|array Comma-separated prop names (e.g. field aliases)
-     */
-    public function inclGridProp($propS) {
-
-        // Convert $propS arg to array and collect fieldR instances array,
-        // with values of `alias` prop, containing in $propS arg
-        $addGridFieldOriginalA = array();
-        foreach (ar($propS) as $propI)
-            $addGridFieldOriginal[] = Indi::trail()->model->fields($propI);
-
-        // Create rowset
-        $addGridFieldRs = Indi::model('Field')->createRowset(array(
-            'rows' => $addGridFieldOriginal,
-            'aliases' => $propS
-        ));
-
-        // Merge existing grid fields with additional
-        Indi::trail()->gridFields->merge($addGridFieldRs);
-    }
-
-    /**
-     * Include additional model's properties into response json, representing rowset data
-     *
-     * @param $propS string|array Comma-separated prop names (e.g. field aliases)
-     */
-    public function exclGridProp($propS) {
-
-        // Merge existing grid fields with additional
-        Indi::trail()->gridFields->exclude($propS, 'alias');
-    }
-
     public function saveAction($return = false) {
 
         // Get array of aliases of fields, that are actually represented in database table

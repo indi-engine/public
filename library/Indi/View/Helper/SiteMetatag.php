@@ -43,9 +43,9 @@ class Indi_View_Helper_SiteMetatag {
         // Foreach row within current metadata group, identified by $tag argument
         foreach (self::$_rs[$tag] as $r) {
 
-            // Init metatag current content item with a prefix
-            $outI = $r->prefix;
-
+            // Declare/reset
+            $outI = '';
+        
             // If item is static - append it's contents to current content item. Else
             if ($r->type == 'static') $outI .= $r->content; else {
 
@@ -70,20 +70,36 @@ class Indi_View_Helper_SiteMetatag {
                         // Append the value of field, that row, got from an appropriate trail level, have
                         $outI .= Indi::trail($r->up)->row->{$r->foreign('fieldId')->alias};
 
-                    // Else if field, pointed as a place of getting data - is a foreign key field
-                    } else {
+                    // Else if field, pointed as a place of getting data - is a single-value foreign key field
+                    } else if ($r->foreign('fieldId')->storeRelationAbility == 'one') {
 
                         // Get title, got by that foreign key, to current content item
                         $outI .= Indi::trail($r->up)->row->foreign($r->foreign('fieldId')->alias)->title();
+                    
+                    // Else if field, pointed as a place of getting data - is a multi-value foreign key field
+                    } else if ($r->foreign('fieldId')->storeRelationAbility == 'many') {
+                    
+                        // Get title, got by that foreign key, to current content item
+                        if ($frs = Indi::trail($r->up)->row->foreign($r->foreign('fieldId')->alias)) {
+                            
+                            // Titles array
+                            $titleA = array(); foreach ($frs as $fr) $titleA[] = $fr->title();
+                            
+                            // Append titles
+                            if ($titleA) $outI .= im($titleA, ', ');
+                        }
                     }
                 }
             }
 
-            // Append postfix
-            $outI .= $r->postfix;
+            // Prepend prefix and append postfix
+            if ($outI) {
+            
+                $outI = $r->prefix . $outI . $r->postfix;
 
-            // Append builded item to items stack
-            $outA[] = $outI;
+                // Append builded item to items stack
+                $outA[] = $outI;
+            }
         }
 
         // Return imploded items

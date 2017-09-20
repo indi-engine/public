@@ -109,10 +109,6 @@ class Indi_Controller_Front extends Indi_Controller {
 
 	public function preDispatch() {
 
-        // Set locale
-        if (Indi::ini()->lang->front == 'ru')
-            setlocale(LC_TIME, 'ru_RU.UTF-8', 'ru_utf8', 'Russian_Russia.UTF8', 'ru_RU', 'Russian');
-
         // Allow accept XHR requests from other hosts
         header('Access-Control-Allow-Origin: *');
 
@@ -307,8 +303,9 @@ class Indi_Controller_Front extends Indi_Controller {
                 // for just a single time, and we've already sent 401 code earlier
                 unset($_SESSION['authRequiredRequest']['code']);
 
-            // Else send HTTP 200 OK status
-            } else header('HTTP/1.1 200 OK');
+            // Else send HTTP 200 OK status code, if no status code was yet sent status
+            } else if (!function_exists('http_response_code') || !http_response_code())
+                header('HTTP/1.1 200 OK');
 
             // Flush out and die
             die($out);
@@ -492,40 +489,6 @@ class Indi_Controller_Front extends Indi_Controller {
      */
     public function createActionOdata($for, $post) {
         $this->formActionOdata($for, $post);
-    }
-
-    /**
-     * Include additional model's properties into response json, representing rowset data
-     *
-     * @param $propS string|array Comma-separated prop names (e.g. field aliases)
-     */
-    public function inclGridProp($propS) {
-
-        // Convert $propS arg to array and collect fieldR instances array,
-        // with values of `alias` prop, containing in $propS arg
-        $addGridFieldOriginalA = array();
-        foreach (ar($propS) as $propI)
-            $addGridFieldOriginal[] = Indi::trail()->model->fields($propI);
-
-        // Create rowset
-        $addGridFieldRs = Indi::model('Field')->createRowset(array(
-            'rows' => $addGridFieldOriginal,
-            'aliases' => $propS
-        ));
-
-        // Merge existing grid fields with additional
-        Indi::trail()->gridFields->merge($addGridFieldRs);
-    }
-
-    /**
-     * Include additional model's properties into response json, representing rowset data
-     *
-     * @param $propS string|array Comma-separated prop names (e.g. field aliases)
-     */
-    public function exclGridProp($propS) {
-
-        // Merge existing grid fields with additional
-        Indi::trail()->gridFields->exclude($propS, 'alias');
     }
 
     public function saveAction($return = false) {

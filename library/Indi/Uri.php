@@ -11,13 +11,13 @@ class Indi_Uri extends Indi_Uri_Base {
     /**
      * Dispatch the uri
      */
-    public function dispatch($uri = ''){
+    public function dispatch($uri = '', $args = array()){
 
         // If $uri argument is given - parse it, and replace own properties with got-by-parsing ones
         if ($uri) $this->parse($uri);
 
         // If `module` property became 'admin' - call parent's dispatch
-        if ($this->module == 'admin') return parent::dispatch();
+        if ($this->module == 'admin') return parent::dispatch($uri, $args);
 
         // Do pre-dispatch operations
         $this->preDispatch();

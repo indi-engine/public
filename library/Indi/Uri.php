@@ -199,8 +199,19 @@ class Indi_Uri extends Indi_Uri_Base {
             // Convert existing request uri to non-seo structure
             $_SERVER['REQUEST_URI'] = $this->seo2sys($_SERVER['REQUEST_URI']);
 
+            // If sys-uri given instead of seo-uri
+            if ($_SERVER['REQUEST_URI'] === false) {
+
+                // Convert sys-uri to seo-uri
+                $seo = $this->sys2seo('href="' . $GLOBALS['INITIAL_URI'] . '"');
+
+                // Redirect to seo-uri
+                header('HTTP/1.1 301 Moved Permanently');
+                header('Location: ' . preg_replace('/^href="|"$/', '', $seo));
+                iexit();
+
             // Refresh uri properties
-            if ($_SERVER['REQUEST_URI'] != $GLOBALS['INITIAL_URI']) $this->parse();
+            } else if ($_SERVER['REQUEST_URI'] != $GLOBALS['INITIAL_URI']) $this->parse();
         }
     }
 
@@ -223,7 +234,8 @@ class Indi_Uri extends Indi_Uri_Base {
 
             $sql = '
 			SELECT
-			  `sa`.`id`
+			  `sa`.`id`,
+			  `a`.`maintenance`
 			FROM
 			  `fsection` `s`,
 			  `faction` `a`,
@@ -286,6 +298,7 @@ class Indi_Uri extends Indi_Uri_Base {
 
                 if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
 
+                if ($parts[0]['prefix'] == $aim[2] && $r[0]['maintenance'] == 'r') return false;
                 for ($i = 0; $i < count($parts); $i++) {
                     if (!in_array($parts[$i]['entityId'], array_keys($models))) $models[$parts[$i]['entityId']] = Indi::model($parts[$i]['entityId']);
                 }

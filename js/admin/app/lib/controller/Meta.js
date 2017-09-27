@@ -1,6 +1,15 @@
 Ext.define('Indi.lib.controller.Meta', {
     extend: 'Indi.Controller',
     actionsConfig: {
+        index: {
+            store: {
+                groupDir: 'DESC'
+            },
+            gridColumn$Up_Renderer: function(v, m, r) {
+                if (r && r.key('type') == 'static') return '';
+                return v;
+            }
+        },
         form: {
             formItem$FieldId: {
                 considerOn: [{
@@ -68,7 +77,8 @@ Ext.define('Indi.lib.controller.Meta', {
                     }],
                     listeners: {
                         enablebysatellite: function(c, d) {
-                            c.setVisible(d.type == 'dynamic' && c.maxValue);
+                            c.setVisible(d.type == 'dynamic');
+                            c.setDisabled(d.type == 'static' || !c.maxValue);
                         }
                     }
                 }

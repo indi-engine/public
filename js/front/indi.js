@@ -16,7 +16,7 @@ Ext.override(Indi, {
 
         // Chose viewport
         Indi.viewport = (xbody = Ext.getBody().down('[i-load] .x-body'))
-            ? Ext.create('Indi.view.viewport.Panel', {renderTo: xbody})
+            ? Ext.create('Indi.view.viewport.Panel', {renderTo: xbody, height: xbody.up('[i-load]').getHeight()})
             : Ext.create('Indi.view.viewport.Iframe');
 
         // Link an app

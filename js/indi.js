@@ -733,7 +733,7 @@ $(document).ready(function(){
                     // If this is not an on-page link, or it won't be impossible to determine target - return
                     if ((this.hostname != location.hostname)
                         || (this.pathname.replace(/^\//, '') != location.pathname.replace(/^\//, ''))
-                        || (this.hash == '#')) return;
+                        || ($(this).attr('href') == '#')) return;
 
                     // Figure out element to scroll to
                     var target = $(this.hash); target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');

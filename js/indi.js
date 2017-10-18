@@ -622,6 +622,9 @@ $(document).ready(function(){
             // Make sure that form will be submitted once submit button/link/etc is clicked
             $(this).find(options.submit).click(function(){
 
+                // Prevent duplicate submit
+                if ($(this).hasClass('.i-stripes')) return false;
+
                 // Submit form
                 $(this).parents('form').submit();
 
@@ -654,10 +657,16 @@ $(document).ready(function(){
                 // Set form target
                 $(this).attr('target', name);
 
+                // Add loading stripes to th submit button
+                if (options.stripes) $(this).find(options.submit).addClass('i-stripes');
+
                 // Bind handler on form target iframe's `load` event
                 $(this).find('iframe[name="' + name + '"]').load(function(){
                     var doc, contentNode, frame = this, success, response = {responseText: '', responseXML: null},
                         form = $(frame).parents('form');
+
+                    // Remove loading stripes from submit button
+                    if (options.stripes) form.find(options.submit).removeClass('i-stripes');
 
                     // Try to pick responseText
                     try {
@@ -701,6 +710,58 @@ $(document).ready(function(){
                 });
             });
         }); }
+
+        /**
+         * Anchor scrolling
+         *
+         * @param event
+         */
+        $.fn.iscroll = function(options) {
+
+            // Default options
+            var defaults = {
+                layer: 'html'
+            }
+
+            // Apply default options
+            options = $.extend({}, defaults, options);
+
+            // For each matching element
+            $(this).find('a[href*="#"]').each(function(){
+                $(this).click(function(event){
+
+                    // If this is not an on-page link, or it won't be impossible to determine target - return
+                    if ((this.hostname != location.hostname)
+                        || (this.pathname.replace(/^\//, '') != location.pathname.replace(/^\//, ''))
+                        || (this.hash == '#')) return;
+
+                    // Figure out element to scroll to
+                    var target = $(this.hash); target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+
+                    // Does a scroll target exist?
+                    if (!target.length) return;
+
+                    // Get scroll offset
+                    var offset = parseInt(target.attr('data-scroll-offset')) || 0;
+
+                    // Only prevent default if animation is actually gonna happen
+                    event.preventDefault();
+
+                    // Animate with callback
+                    $(options.layer).animate({scrollTop: target.offset().top + offset}, 500, function() {
+
+                        // Must change focus!
+                        var $target = $(target); $target.focus();
+
+                        // If target is focused - return
+                        if ($target.is(":focus")) return false;
+
+                        // Else add tabindex for elements not focusable and set focus again
+                        else $target.attr('tabindex','-1').focus();
+                    });
+                });
+            });
+        };
 
         /**
          * Set field to watch at other fields

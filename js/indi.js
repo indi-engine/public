@@ -521,11 +521,12 @@ $(document).ready(function(){
                     urlOwner.url = urlOwner.url.split('?')[0] + '?answer=' + answer
                         + (urlOwner.url.split('?')[1] ? '&' + urlOwner.url.split('?')[1] : '');
 
-                    // If answer is 'ok' show load mask
-                    //if (answer == 'ok') Indi.loadmask.show();
-
                     // Make new request
-                    if (form) form.submit(); else $.ajax(options);
+                    if (form) form.attr({action: urlOwner.url}).submit(function(){
+                        setTimeout(function(){
+                            form.attr('action', form.attr('action').replace('?answer=' + answer, ''));
+                        }, 10);
+                    }).submit(); else $.ajax(options);
                 }
 
             // Else if `success` prop is set

@@ -230,7 +230,7 @@ class Indi_Uri extends Indi_Uri_Base {
         if ($aim[count($aim)-1] == 'noseo') return $seo;
         if (count($aim) > 1) {
 
-            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
 
             $sql = '
 			SELECT
@@ -296,7 +296,7 @@ class Indi_Uri extends Indi_Uri_Base {
                 $sys[] = $parts[0]['alias'] ? $parts[0]['alias'] : ($parts[0]['rename'] ? $parts[0]['originalAlias'] : $aim[1]);
                 $alias = $parts[0]['alias'] ? $aim[1] : $aim[2];
 
-                if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
 
                 if ($parts[0]['prefix'] == $aim[2] && $r[0]['maintenance'] == 'r') return false;
                 for ($i = 0; $i < count($parts); $i++) {
@@ -321,16 +321,16 @@ class Indi_Uri extends Indi_Uri_Base {
                         } else if ($i > 0){
                             $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                             $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
-                            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                         }
                         $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                         $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
-                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                     } else if ($component = $models[$parts[$i]['entityId']]->fetchRow('`alias` = ""' . $where)) {
                         $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                         $shift++;
                         $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
-                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                     } else if (!$alias) {
                         $sys[] = $parts[$i-1]['prefix'] . '/' . $lastId;
                         break;

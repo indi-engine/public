@@ -705,6 +705,9 @@ $(document).ready(function(){
                         row: form.attr('data-row')
                     });
 
+                    // Remove iframe
+                    $(this).remove();
+
                     // Call onSuccess fn, passing response.responseJson as a direct argument
                     if (success && typeof options.onSuccess == 'function')
                         options.onSuccess.apply(form[0], [response.responseJson]);

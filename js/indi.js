@@ -397,7 +397,7 @@ $(document).ready(function(){
             try { json = JSON.parse(response.responseText); } catch (e) {
 
                 // If response status code is 401
-                if (response.status == 401) {
+                if (response.status == 401 || (response.status == undefined && $(response.responseText).find('.xhr'))) {
 
                     // Shortcut to .xhr node within responseText
                     var xhrEl = $(response.responseText).find('.xhr');
@@ -474,12 +474,12 @@ $(document).ready(function(){
                         /*if (Ext.isString(certainFieldMsg))
                             certainFieldMsg = certainFieldMsg.replace('"' + cmp.fieldLabel + '"', '').replace(/""/g, '');*/
 
-                        // Mark field as invalid
-                        $(cmp).ierror(certainFieldMsg);
-
                         // If field is currently hidden - we duplicate error message for it to be shown within
                         // Ext.MessageBox, additionally
-                        if ($(cmp).hidden) wholeFormMsg.push(errorByFieldO[i]);
+                        if ($(cmp).is(':hidden') && !$(cmp).attr('i-field-error-after')) wholeFormMsg.push(errorByFieldO[i]);
+
+                        // Mark field as invalid
+                        else $(cmp).ierror(certainFieldMsg);
 
                         // Else mismatch message is related to field, that currently, for some reason, is not available
                         // within the form - push that message to the wholeFormMsg array

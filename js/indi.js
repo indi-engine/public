@@ -19,6 +19,15 @@ $(document).ready(function(){
             name: 'ru'
         };
 
+        //
+        indi.cfg = {
+            parseResponse: {
+                mbox: {
+                    onSuccess: true
+                }
+            }
+        }
+
         /**
          * Quotes string that later will be used in regular expression.
          *
@@ -533,13 +542,17 @@ $(document).ready(function(){
             }); else if ('success' in json && 'msg' in json) {
 
                 // If `msg` prop is set - show it within Ext.MessageBox
-                boxA.push({
-                    title: indi.lang[json.success ? 'I_MSG' : 'I_ERROR'],
-                    msg: json.msg,
-                    buttons: 'Ext.Msg.OK',
-                    icon: "Ext.Msg[json.success ? 'INFO' : 'WARNING']",
-                    modal: true
-                });
+                if (Indi.cfg.parseResponse.mbox.onSuccess || !json.success)
+                    boxA.push({
+                        title: indi.lang[json.success ? 'I_MSG' : 'I_ERROR'],
+                        msg: json.msg,
+                        buttons: 'Ext.Msg.OK',
+                        icon: "Ext.Msg[json.success ? 'INFO' : 'WARNING']",
+                        modal: true
+                    });
+
+                // Reset mbox usage flag back to `true`
+                Indi.cfg.parseResponse.mbox.onSuccess = true;
             }
 
             // Assign json

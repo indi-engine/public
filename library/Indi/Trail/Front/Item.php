@@ -94,12 +94,6 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 $this->grid = $sectionR->foreign('sectionId')->nested('grid');
             }
 
-            // Setup empty rowset of disabled fields. Front-trail currently does not yet
-            // deal with disabled fields in a way that admin-trail does, so we need to simulate
-            // disabled fields property existence for compatibility with existing javascript
-            // components, that require that property to be defined
-            $this->disabledFields = Indi::model('DisabledField')->createRowset(array('rows' => array()));
-
         // Else
         } else {
 

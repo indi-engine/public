@@ -508,11 +508,10 @@ class Indi_Controller_Front extends Indi_Controller {
         // If there was disabled fields defined for current section, we check if default value was additionally set up
         // and if so - assign that default value under that disabled field alias in $data array, or, if default value
         // was not set - drop corresponding key from $data array
-        foreach (Indi::trail()->disabledFields as $disabledFieldR)
-            foreach (Indi::trail()->fields as $fieldR)
-                if ($fieldR->id == $disabledFieldR->fieldId)
-                    if (!strlen($disabledFieldR->defaultValue)) unset($data[$fieldR->alias]);
-                    else $data[$fieldR->alias] = $disabledFieldR->compiled('defaultValue');
+        foreach (Indi::trail()->fields as $fieldR)
+            if (in($fieldR->mode, 'hidden,readonly'))
+                if (!strlen($fieldR->defaultValue) || $this->row->id) unset($data[$fieldR->alias]);
+                else $data[$fieldR->alias] = $fieldR->compiled('defaultValue');
 
         // If current cms user is an alternate, and if there is corresponding field within current entity structure
         if ($this->alternateWHERE() && Indi::admin()->alternate && in($aid = Indi::admin()->alternate . 'Id', $possibleA))
@@ -529,17 +528,15 @@ class Indi_Controller_Front extends Indi_Controller {
         // it, for avoid problems while possible move from STD to non-STD, or other-STD directories
         $this->row->trimSTDfromCKEvalues();
 
-        // Get the list of ids of fields, that are disabled
-        $disabledA = Indi::trail()->disabledFields->column('fieldId');
-
         // Get the aliases of fields, that are file upload fields, and that are not disabled,
         // and are to be some changes applied on
         $filefields = array();
         foreach (Indi::trail()->fields as $fieldR)
-            if ($fieldR->foreign('elementId')->alias == 'upload' && !in_array($fieldR->id, $disabledA) && $_ = Indi::post($fieldR->alias)) {
-                if (!Indi::rexm('url', $_) && $_ != 'd') $_ = Indi::post()->{$fieldR->alias} = 'm';
-                if (preg_match('/^m|d$/', $_) || Indi::rexm('url', $_)) $filefields[] = $fieldR->alias;
-            }
+            if (!in($fieldR->mode, 'hidden,readonly'))
+                if ($fieldR->foreign('elementId')->alias == 'upload' && $_ = Indi::post($fieldR->alias)) {
+                    if (!Indi::rexm('url', $_) && $_ != 'd') $_ = Indi::post()->{$fieldR->alias} = 'm';
+                    if (preg_match('/^(m|d)$/', $_) || Indi::rexm('url', $_)) $filefields[] = $fieldR->alias;
+                }
 
         // Prepare metadata, related to fileupload fields contents modifications
         $this->row->files($filefields);

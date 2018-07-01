@@ -13,7 +13,7 @@ class Menu_Rowset extends Indi_Db_Table_Rowset {
 		if ($level == 0) return $this;
 		if ($rowset == null) $rowset = $this;
 		foreach ($rowset as $item) {
-			if ($item->active) return ($level == $currentLevel ? $item->children : $this->active($level, $item->children, $currentlevel + 1));
+			if ($item->active) return ($level == $currentLevel ? $item->children : $this->active($level, $item->children, $currentLevel + 1));
 		}
 	}
 }

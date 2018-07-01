@@ -11,10 +11,37 @@ class Indi_Uri extends Indi_Uri_Base {
     /**
      * Dispatch the uri
      */
-    public function dispatch(){
+    public function dispatch($uri = '', $args = array()){
+
+        // If $uri argument is given - parse it, and replace own properties with got-by-parsing ones
+        if ($uri) $this->parse($uri);
+
+        // If `module` property became 'admin' - call parent's dispatch
+        if ($this->module == 'admin') return parent::dispatch($uri, $args);
 
         // Do pre-dispatch operations
         $this->preDispatch();
+
+        // Try to find an `fsection` entry having `alias` == 'index' and `type` = 's', and if found
+        // - check if Indi::uri('section') equals to one of that `fsection` entry's `faction` entry.
+        // If yes - this mean that we should, in fact, do some jerk with uri parts
+        if (Indi::db()->query('
+            SELECT `s`.`alias`
+            FROM
+              `fsection` `s`,
+              `faction` `a`,
+              `fsection2faction` `sa`
+            WHERE 1
+              AND `s`.`alias` = "index"
+              AND `s`.`type` = "s"
+              AND `s`.`toggle` = "y"
+              AND `s`.`id` = `sa`.`fsectionId`
+              AND `sa`.`factionId` = `a`.`id`
+              AND `a`.`alias` = "' . Indi::uri('section') . '"
+        ')->fetch()) {
+            Indi::uri()->action = Indi::uri()->section;
+            Indi::uri()->section = 'index';
+        }
 
         // Build the controller class name
         $controllerClass = ucfirst(Indi::uri('section')) . 'Controller';
@@ -32,23 +59,37 @@ class Indi_Uri extends Indi_Uri_Base {
             // If found Fsection_Row represents 'static' frontend section
             if ($fsectionR->alias == 'static') {
 
-                // Build the array of WHERE clauses, for try to find a appropriate static page
-                $where = array_merge(
-                    array('`alias` IN ("' . Indi::uri('section') . '", "404")', '`toggle` = "y"'),
-                    $this->staticpageAdditionalWHERE
-                );
+                // Here we collect all uri parts starting from Indi::uri('section') and up to the end inclusively as there
+                // may be a probability of nested uri parts, each representing some static page at it's deepness level
+                $aliasA = explode('/', trim(preg_replace('~^' . STD . '~', '', str_replace($_SERVER['QUERY_STRING'], '', $_SERVER['REQUEST_URI'])), '? /'));
 
-                // Get the Staticpage_Row object, related either to appropriate static page, or '404'
-                // static page, which will be used in case if appropriate static page won't be found
-                $staticpageR = Indi::model('Staticpage')->fetchRow($where, 'FIND_IN_SET(`alias`, "' . Indi::uri('section') . ',404")');
+                // For each alias
+                foreach ($aliasA as $aliasI) {
 
-                // Setup new uri params
-                Indi::uri()->section = 'static';
-                Indi::uri()->action = 'details';
-                Indi::uri()->id = $staticpageR->id;
+                    // Build the array of WHERE clauses, for try to find a appropriate static page
+                    $where = array_merge(
+                        array('`alias` IN ("' . alias($aliasI) . '", "404")', '`toggle` = "y"'),
+                        $this->staticpageAdditionalWHERE
+                    );
 
-                // If static page is '404' setup $notFound flag as boolean true
-                if ($staticpageR->alias == '404' || !$staticpageR->id) $notFound = true;
+                    // Force tree check
+                    if ($staticpageR) $where[] = '(`staticpageId` = "' . $staticpageR->id . '" OR `alias` = "404")';
+
+                    // Get the Staticpage_Row object, related either to appropriate static page, or '404'
+                    // static page, which will be used in case if appropriate static page won't be found
+                    $staticpageR = Indi::model('Staticpage')->fetchRow($where, 'FIND_IN_SET(`alias`, "' . alias($aliasI) . ',404")');
+
+                    // Setup new uri params
+                    Indi::uri()->section = 'static';
+                    Indi::uri()->action = 'details';
+                    Indi::uri()->id = $staticpageR->id;
+
+                    // If static page is '404' setup $notFound flag as boolean true
+                    if ($staticpageR->alias == '404' || !$staticpageR->id) {
+                        $notFound = true;
+                        break;
+                    }
+                }
 
             // Else if found Fsection_Row represents some another frontend section, but the action, specified within
             // the uri - is not a one of actions, that are allowed for use in frontend
@@ -73,15 +114,21 @@ class Indi_Uri extends Indi_Uri_Base {
             }
         }
 
+
         if ($notFound) {
             header('HTTP/1.1 404 Not Found');
-            if (!$staticpageR->id) die(I_NO404_FOUND);
+            if (!$staticpageR->id) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
         } else {
             $this->trailingSlash();
         }
 
         // Build the controller class name
         $controllerClass = ucfirst(Indi::uri('section')) . 'Controller';
+
+        // Replace '-[a-z]' with '-[A-Z]'
+        $controllerClass = preg_replace_callback('/-([a-z]+)/', function($m){
+            return ucfirst($m[1]);
+        }, $controllerClass);
 
         // If there is no such a controller
         if (!class_exists($controllerClass)) {
@@ -151,8 +198,19 @@ class Indi_Uri extends Indi_Uri_Base {
             // Convert existing request uri to non-seo structure
             $_SERVER['REQUEST_URI'] = $this->seo2sys($_SERVER['REQUEST_URI']);
 
+            // If sys-uri given instead of seo-uri
+            if ($_SERVER['REQUEST_URI'] === false) {
+
+                // Convert sys-uri to seo-uri
+                $seo = $this->sys2seo('href="' . $GLOBALS['INITIAL_URI'] . '"');
+
+                // Redirect to seo-uri
+                header('HTTP/1.1 301 Moved Permanently');
+                header('Location: ' . preg_replace('/^href="|"$/', '', $seo));
+                iexit();
+
             // Refresh uri properties
-            if ($_SERVER['REQUEST_URI'] != $GLOBALS['INITIAL_URI']) $this->parse();
+            } else if ($_SERVER['REQUEST_URI'] != $GLOBALS['INITIAL_URI']) $this->parse();
         }
     }
 
@@ -171,11 +229,12 @@ class Indi_Uri extends Indi_Uri_Base {
         if ($aim[count($aim)-1] == 'noseo') return $seo;
         if (count($aim) > 1) {
 
-            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
 
             $sql = '
 			SELECT
-			  `sa`.`id`
+			  `sa`.`id`,
+			  `a`.`maintenance`
 			FROM
 			  `fsection` `s`,
 			  `faction` `a`,
@@ -236,8 +295,9 @@ class Indi_Uri extends Indi_Uri_Base {
                 $sys[] = $parts[0]['alias'] ? $parts[0]['alias'] : ($parts[0]['rename'] ? $parts[0]['originalAlias'] : $aim[1]);
                 $alias = $parts[0]['alias'] ? $aim[1] : $aim[2];
 
-                if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
 
+                if ($parts[0]['prefix'] == $aim[2] && $r[0]['maintenance'] == 'r') return false;
                 for ($i = 0; $i < count($parts); $i++) {
                     if (!in_array($parts[$i]['entityId'], array_keys($models))) $models[$parts[$i]['entityId']] = Indi::model($parts[$i]['entityId']);
                 }
@@ -245,7 +305,11 @@ class Indi_Uri extends Indi_Uri_Base {
                 $lastId = 0;
                 $shift = 0;
                 for ($i = 0; $i < count($parts); $i++) {
-                    if (isset($aim[$i - 1 + ($parts[0]['alias'] ? 2 : 3) - $shift]) && $component = $models[$parts[$i]['entityId']]->fetchRow('`alias` = "' . $alias . '"' . $where)) {
+                    if (isset($aim[$i - 1 + ($parts[0]['alias'] ? 2 : 3) - $shift]) && $component = $models[$parts[$i]['entityId']]->fetchRow(
+                        (preg_match('/-([0-9]+)$/', $alias)
+                            ? '(`alias` = "' . $alias . '" OR `id` = "' . array_pop(explode('-', $alias)) . '")'
+                            : '`alias` = "' . $alias . '"') . $where)
+                    ) {
 //					echo '`alias` = "' . $alias . '"' . $where . '<br>' . "\n";
                         $lastId = $component->id;
 
@@ -256,16 +320,16 @@ class Indi_Uri extends Indi_Uri_Base {
                         } else if ($i > 0){
                             $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                             $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
-                            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                            if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                         }
                         $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                         $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
-                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                     } else if ($component = $models[$parts[$i]['entityId']]->fetchRow('`alias` = ""' . $where)) {
                         $where = ' AND `' . $models[$parts[$i]['entityId']]->table() . 'Id` = ' . $component->id;
                         $shift++;
                         $alias = $aim[$i+($parts[0]['alias'] ? 2 : 3) - $shift];
-                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
+                        if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $alias)) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
                     } else if (!$alias) {
                         $sys[] = $parts[$i-1]['prefix'] . '/' . $lastId;
                         break;
@@ -284,7 +348,8 @@ class Indi_Uri extends Indi_Uri_Base {
     }
 
     public static function sys2seo($sys, $cr = false, $reg = ''){
-        preg_match_all($reg ? $reg: '/(href|url)="([0-9a-z\/#]+)"/', $sys, $matches);
+        //preg_match_all($reg ? $reg: '/(href|url)="([0-9a-z\/#]+)"/', $sys, $matches);
+        preg_match_all($reg ? $reg: '/(href|url)="([^"\.]+)"/', $sys, $matches);
         $uri = $matches[2];
         $db = Indi::db();
         $furi = array();
@@ -399,4 +464,39 @@ class Indi_Uri extends Indi_Uri_Base {
         }
         return $sys;
     }
-}
+
+    /**
+     * Search all href of <a> tags, check if href is leading to a static page, and if so - prepend that href with hrefs
+     * of all parent static pages, delimied by '/'
+     *
+     * @param $html
+     * @return mixed
+     */
+    public static function nspu($html) {
+
+        // If 'staticpage' entity is not a tree
+        if (!Indi::model('Staticpage')->fields('staticpageId')) return $html;
+
+        // Get all static pages
+        $staticpageA = Indi::db()->query('SELECT `id`, `alias`, `staticpageId` AS `parentId`  FROM `staticpage`')->fetchAll();
+
+        // Re-index static pages array, so their ids will be their keys
+        foreach ($staticpageA as $i => $staticpageI) $tmp[$staticpageI['id']] = $staticpageI; $staticpageA = $tmp;
+
+        // Prepend static page uris with parent pages aliases
+        foreach ($staticpageA as $staticpageI) if ($staticpageI['parentId']) {
+
+            // Reset prefix and initial $id
+            $pref = ''; $id = $staticpageI['id'];
+
+            // Build prefix
+            while ($id = $staticpageA[$id]['parentId']) $pref = $staticpageA[$id]['alias'] . '/' . $pref;
+
+            // Make the replacements
+            $html = preg_replace('~href="/(' . $staticpageI['alias'] . '/)"~', 'href="/' . $pref . '$1"', $html);
+        }
+
+        // Return
+        return $html;
+    }
+};

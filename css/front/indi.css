@@ -1,0 +1,17 @@
+[i-load] .x-viewport {width: 100%;}
+[i-load] .x-body {height: 100%;}
+[i-load] tr td {padding: 0;}
+[i-load] table, [i-load] table tr, [i-load] table tr td, [i-load] table tr th {border: none;}
+[i-load] input[type="text"], [i-load] input[type="password"], [i-load] input[type="email"], [i-load] textarea, [i-load] select {
+    /*padding: 0;
+    margin: 0;
+    outline: none;
+    max-width: auto;
+    border: none;*/
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    border-radius: 0px;
+}
+li.x-boundlist-item  {margin: 0}
+.x-boundlist ul {margin: 0}
+.x-trigger-cell {width: 19px !important;}

@@ -10,7 +10,7 @@ class Indi_View_Helper_InitFacebook {
 		ob_start();?>
 <div id="fb-root"></div>
 <script>
-window.fbAsyncInit=function(){FB.init({appId:'<?=$appId?>', status:true, cookie:true, xfbml:true, oauth:true});};
+window.fbAsyncInit=function(){FB.init({appId:'<?=$appId?>', xfbml:true, version: 'v2.11'});};
 (function(d){var js,id='facebook-jssdk';if(d.getElementById(id)){return;}js=d.createElement('script');js.id=id;
 js.async=true;js.src = "//connect.facebook.net/<?=Indi::ini()->lang->front == 'ru' ? 'ru_RU' : 'en_US'?>/all.js";
 d.getElementsByTagName('head')[0].appendChild(js);}(document));

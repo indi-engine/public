@@ -1,0 +1,109 @@
+form[target^="i-form-target"] iframe[name^="i-form-target"] {
+    display: none;
+}
+.i-field-error {
+    position: absolute;
+    background-color: #cd2e26;
+    color: white;
+    padding: 3px 6px;
+    z-index: 9;
+    margin-top: 0;
+    font-size: 12px;
+    display: block;
+}
+.i-field-error:before {
+    content: '';
+    position: absolute;
+    display: block;
+    height: 0;
+    width: 0;
+    border-width: 4px;
+    border-style: solid;
+}
+.i-field-error:before {
+    top: -7px;
+    left: 10px;
+    border-color: transparent transparent #cd2e26 transparent;
+}
+.i-stripes {
+    cursor: wait !important;
+    -webkit-animation: i-stripes 2s linear infinite;
+    -o-animation: i-stripes 2s linear infinite;
+    animation: i-stripes 2s linear infinite;
+    background-image: -webkit-linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)!important;
+    background-image: -o-linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent) !important;
+    background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent) !important;
+    -o-background-size:  40px 40px;
+    -moz-background-size:  40px 40px;
+    -webkit-background-size: 40px 40px;
+    background-size: 40px 40px;
+    background-repeat: repeat !important;
+}
+@-webkit-keyframes i-stripes {
+    from {background-position: -40px 0} to{background-position:0 0}
+}
+@-o-keyframes i-stripes {
+    from {background-position: -40px 0} to {background-position:0 0}
+}
+@keyframes i-stripes {
+    from {background-position: -40px 0} to {background-position:0 0}
+}
+
+.ui-dialog {
+    z-index: 1000 !important;
+}
+.ui-widget-header {
+    border: 0;
+    background: none;
+    font-size: 10px;
+}
+.ui-corner-all {
+    border-radius: 0;
+}
+.ui-button.ui-dialog-titlebar-close {
+    border: 0;
+    background: none;
+}
+.ui-button.ui-dialog-titlebar-close:hover {
+    border: 0;
+    background: none;
+    font: inherit;
+}
+.ui-widget.ui-widget-content {
+    max-width: 50%;
+}
+.ui-dialog .ui-dialog-titlebar {
+    padding: 0 1em;
+}
+.ui-dialog-buttonpane.ui-widget-content {
+    border: 0;
+    text-align: center;
+    padding: 0;
+}
+.ui-dialog .ui-dialog-title {
+    /*font: 400 17px/24px 'Futura New', sans-serif*/
+}
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+    float: none;
+}
+.ui-dialog .ui-dialog-buttonpane button, .ui-button {
+    padding: 11px 30px;
+    /*font: bold 16px/20px 'Futura New', sans-serif;*/
+    max-width: 100%;
+    background: #c20e2c;
+    border-radius: 3px;
+    border: 0;
+    color: #ffffff;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ui-button:hover, .ui-button:focus {
+    border: 0;
+    background: #c20e2c;
+    /*font: bold 16px/20px 'Futura New', sans-serif;*/
+    color: #ffffff;
+}
+.ui-dialog .ui-dialog-content {
+    /*font: 100 24px/32px 'Futura New', sans-serif;*/
+}

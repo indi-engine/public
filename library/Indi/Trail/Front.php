@@ -36,7 +36,43 @@ class Indi_Trail_Front {
 
         // Setup initial set of properties
         foreach ($sectionRs as $sectionR)
-            self::$items[] = new Indi_Trail_Front_Item($sectionR);
+            self::$items[] = new Indi_Trail_Front_Item($sectionR, $sectionRs->count() - ++$i);
+
+        // If
+        if (Indi::uri('action') == 'index') {
+
+            // If current section is not a one of the root-sections,
+            // and parent section's type is 'single-row section'
+            // and parent section has non-empty `where` prop
+            // and compiled version of that prop is not an empty string
+            // and row was found using that compiled version as WHERE clause
+            if (self::$items[0]->section->fsectionId
+                && self::$items[1]->section->type == 's'
+                && strlen(self::$items[1]->section->where)
+                && strlen($majorWHERE = self::$items[1]->section->compiled('where'))
+                && $parentRow = self::$items[1]->model->fetchRow($majorWHERE)) {
+
+                // Get the parent id
+                $id = $parentRow->id;
+
+            // Else if parent section's row's id is given directly via uri
+            } else if (Indi::rexm('int11', Indi::uri('id'))) {
+
+                // Get the parent id
+                $id = Indi::uri('id');
+            }
+
+            // If $id was defined using any of both methods
+            if ($id) {
+
+                // If there is no info about nesting yet, we create an array, where it will be stored
+                if (!is_array($_SESSION['indi']['front']['trail']['parentId']))
+                    $_SESSION['indi']['front']['trail']['parentId'] = array();
+
+                // Save id in session
+                $_SESSION['indi']['front']['trail']['parentId'][self::$items[0]->section->fsectionId] = $id;
+            }
+        }
 
         // Reverse items
         self::$items = array_reverse(self::$items);
@@ -72,6 +108,12 @@ class Indi_Trail_Front {
 
         // Flush an error, if error was met
         if ($error) $controller->notFound();
+
+        // Setup blank scope object for each trail item
+        for ($i = 0; $i < count(self::$items); $i++) {
+            Indi::trail($i)->scope = new Indi_Trail_Admin_Item_Scope($i);
+            Indi::trail($i)->filtersSharedRow($i);
+        }
     }
 
     /**
@@ -82,5 +124,20 @@ class Indi_Trail_Front {
      */
     public function item($stepsUp = 0) {
         return self::$items[count(self::$items) - 1 - $stepsUp];
+    }
+
+    /**
+     * Get an array version of trail. Method is used to pass trail data to javascript as json
+     *
+     * @uses Indi_Trail_Item::toArray()
+     * @return array
+     */
+    public function toArray() {
+        $array = array();
+        foreach (self::$items as $item) {
+            $array[] = $item->toArray();
+        }
+        end(self::$items);
+        return $array;
     }
 }

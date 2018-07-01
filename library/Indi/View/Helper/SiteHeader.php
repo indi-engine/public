@@ -8,6 +8,7 @@ class Indi_View_Helper_SiteHeader {
         <meta charset="utf-8">
         <?=Indi::view()->siteFavicon()?>
         <title><?=Indi::view()->siteMetatag('title')?></title>
+		<meta name="title" content="<?=Indi::view()->siteMetatag('title')?>">
         <meta name="description" content="<?=Indi::view()->siteMetatag('description')?>">
         <meta name="keywords" content="<?=Indi::view()->siteMetatag('keywords')?>">
         <link rel="stylesheet" type="text/css" href="/css/style.css">

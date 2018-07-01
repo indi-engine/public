@@ -43,56 +43,60 @@ class Indi_View_Helper_Pager {
             // If current page is not first page - prepend pages listing with special 'previous' link
             if ($this->page > 1) {?><a data-page="<?=$this->page - 1?>" class="previous-link" href="<?=$this->href($this->page - 1)?>">Предыдущая</a><?}
 
-            // Start building pages list html
-            ?><span class="pages"><?
+            // If $display arg is non-zero
+            if ($display) {
 
-            // 1-st page
-            $pageA[] = $this->page(1);
+                // Start building pages list html
+                ?><span class="pages"><?
 
-            // Setup the maximum quantity of clickable pages list within span.pages
-            $display = $display > $pages ? $pages : $display;
+                // 1-st page
+                $pageA[] = $this->page(1);
 
-            // Get count of pages, that should be displayed in center of pager
-            $center = $display - 5;
+                // Setup the maximum quantity of clickable pages list within span.pages
+                $display = $display > $pages ? $pages : $display;
 
-            // Get start page index for center
-            $start = $this->page - ceil($center/2);
+                // Get count of pages, that should be displayed in center of pager
+                $center = $display - 5;
 
-            // Shift $start if too small
-            if ($start < 3) $start = 3;
+                // Get start page index for center
+                $start = $this->page - ceil($center/2);
 
-            // Get end page index for center
-            $end = $start + $center;
+                // Shift $start if too small
+                if ($start < 3) $start = 3;
 
-            // Shift $end if too big
-            if ($end > $pages - 2) {
-                $end = $pages - 2;
-                $start = $end - $center;
-            }
+                // Get end page index for center
+                $end = $start + $center;
 
-            // Another 'previous' page - now it is not outside span.pages, and titled as '...'
-            if ($pages > 2)
-                $pageA[] = $this->page($start - 1, ($start - 2 == 1 ? $start - 1 : '...'));
-
-            // Center pages
-            if ($pages > 4) {
-                for ($i = $start; $i <= $end; $i++) {
-                    $pageA[] = $this->page($i);
+                // Shift $end if too big
+                if ($end > $pages - 2) {
+                    $end = $pages - 2;
+                    $start = $end - $center;
                 }
+
+                // Another 'previous' page - now it is not outside span.pages, and titled as '...'
+                if ($pages > 2)
+                    $pageA[] = $this->page($start - 1, ($start - 2 == 1 ? $start - 1 : '...'));
+
+                // Center pages
+                if ($pages > 4) {
+                    for ($i = $start; $i <= $end; $i++) {
+                        $pageA[] = $this->page($i);
+                    }
+                }
+
+                // Next page (mean next after the last of center)
+                if ($pages > 3)
+                    $pageA[] = $this->page($end + 1, ($end + 2 == $pages ? $end + 1 : '...'));
+
+                // Last page
+                $pageA[] = $this->page($pages);
+
+                // Implode pages html elements
+                echo implode(' ', $pageA);
+
+                // Close the span.pages element
+                ?></span><?
             }
-
-            // Next page (mean next after the last of center)
-            if ($pages > 3)
-                $pageA[] = $this->page($end + 1, ($end + 2 == $pages ? $end + 1 : '...'));
-
-            // Last page
-            $pageA[] = $this->page($pages);
-
-            // Implode pages html elements
-            echo implode(' ', $pageA);
-
-            // Close the span.pages element
-            ?></span><?
 
             // Another 'next' element, which will be outside span.pages element, but within div.pager element
             if ($this->page < $pages) {

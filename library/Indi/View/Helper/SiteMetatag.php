@@ -9,6 +9,11 @@ class Indi_View_Helper_SiteMetatag {
     protected static $_rs = null;
 
     /**
+     * @var array
+     */
+    protected static $_out = array();
+
+    /**
      * Build metatag content for a certain tag type
      *
      * @param $tag
@@ -36,6 +41,9 @@ class Indi_View_Helper_SiteMetatag {
             // Unset $rs
             unset($rs);
         }
+
+        // If metatag contents was already built - use it
+        if (array_key_exists($tag, self::$_out)) return self::$_out[$tag];
 
         // Declare array of metatag content items
         $outA = array();
@@ -102,7 +110,10 @@ class Indi_View_Helper_SiteMetatag {
             }
         }
 
+        // Append string, that should be constantly presented within metatag contents
+        if ($const = Indi::ini('metatag')->const) $outA[] = $const;
+
         // Return imploded items
-        return implode('', $outA);
+        return self::$_out[$tag] = str_replace('"', '&quot;', implode(Indi::ini('metatag')->delim, $outA));
     }
 }

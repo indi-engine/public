@@ -1,5 +1,5 @@
 $(document).ready(function(){
-    window.Indi = function(indi) {
+    $ = jQuery; window.Indi = function(indi) {
 
         // Setup default value for indi.std property
         indi.std = '';
@@ -656,6 +656,15 @@ $(document).ready(function(){
                 $(this).ierror(false);
             });
 
+            // Remove hidden fields, created for each fileupload field
+            $(this).find('[type=file]').each(function(){
+                $(this).siblings('[type=hidden][name='+$(this).attr('name')+']').remove();
+                $(this).change(function(){
+                    if (this.value) return;
+                    $(this).siblings('[type=hidden][name='+$(this).attr('name')+']').remove();
+                })
+            });
+
             // Bind handler for `submit` event
             $(this).submit(function(){
 
@@ -670,6 +679,12 @@ $(document).ready(function(){
 
                 // Set form target
                 $(this).attr('target', name);
+
+                // Remove hidden fields, created for each fileupload field
+                $(this).find('[type=file]').each(function(){
+                    if (!this.value) return;
+                    $('<input type="hidden" name="'+$(this).attr('name')+'" value="m">').insertAfter(this);
+                });
 
                 // Add loading stripes to th submit button
                 if (options.stripes) $(this).find(options.submit).addClass('i-stripes');

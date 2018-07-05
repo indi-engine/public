@@ -104,37 +104,89 @@ class Admin_MigrationController extends Indi_Controller {
                     'columnTypeId' => 'INT(11)',
                     'elementId' => 'move',
                 ));
+            } else {
+                field('metatag', 'fsectionId', array('mode' => 'required'));
+                field('metatag', 'fsection2factionId', array('mode' => 'required'));
+                field('metatag', 'content', array('title' => 'Указанный вручную'));
+                field('metatag', 'fieldId', array('title' => 'Поле'));
+                field('metatag', 'move', array('elementId' => 'move'));
+                enumset('metatag', 'tag', 'title', array('title' => 'Title'));
+                enumset('metatag', 'tag', 'keywords', array('title' => 'Keywords'));
+                enumset('metatag', 'tag', 'description', array('title' => 'Description'));
             }
 
-            field('metatag', 'fsectionId', array('mode' => 'required'));
-            field('metatag', 'fsection2factionId', array('mode' => 'required'));
-            field('metatag', 'content', array('title' => 'Указанный вручную'));
-            field('metatag', 'fieldId', array('title' => 'Поле'));
-            field('metatag', 'move', array('elementId' => 'move'));
-            section('metatitles', array(
-                'title'=> 'Компоненты meta-тегов',
-                'filter' => '',
-                'groupBy' => 'tag',
-                'rowsetSeparate' => 'yes'
-            ));
-            grid('grid', 'title', array('toggle' => 'y'));
-            section2action('metatitles', 'index', array('fitWindow' => 'n'));
-            section('metatitles')->nested('grid')->delete();
-            section('metatitles')->nested('alteredField')->delete();
-            enumset('metatag', 'tag', 'title', array('title' => 'Title'));
-            enumset('metatag', 'tag', 'keywords', array('title' => 'Keywords'));
-            enumset('metatag', 'tag', 'description', array('title' => 'Description'));
-            grid('metatitles', 'type', true);
-            grid('metatitles', 'move', true);
-            grid('metatitles', 'tag', true);
-            grid('metatitles', 'component', array('alterTitle' => 'Компонент'));
-                grid('metatitles', 'prefix', array('editor' => '1', 'gridId' => 'component'));
-                grid('metatitles', 'content', array('gridId' => 'component'));
-                grid('metatitles', 'context', array('alterTitle' => 'Взятый из контекста', 'gridId' => 'component'));
-                    grid('metatitles', 'up', array('alterTitle' => 'Уровень', 'gridId' => 'context'));
-                    grid('metatitles', 'source', array('gridId' => 'context'));
-                    grid('metatitles', 'fieldId', array('gridId' => 'context'));
-                grid('metatitles', 'postfix', array('editor' => '1', 'gridId' => 'component'));
+            if (section('metatitles')) {
+                section('metatitles', array(
+                    'title'=> 'Компоненты meta-тегов',
+                    'filter' => '',
+                    'groupBy' => 'tag',
+                    'rowsetSeparate' => 'yes'
+                ));
+                grid('grid', 'title', array('toggle' => 'y'));
+                section2action('metatitles', 'index', array('fitWindow' => 'n'));
+                section('metatitles')->nested('grid')->delete();
+                section('metatitles')->nested('alteredField')->delete();
+                grid('metatitles', 'type', true);
+                grid('metatitles', 'move', true);
+                grid('metatitles', 'tag', true);
+                grid('metatitles', 'component', array('alterTitle' => 'Компонент'));
+                    grid('metatitles', 'prefix', array('editor' => '1', 'gridId' => 'component'));
+                    grid('metatitles', 'content', array('gridId' => 'component'));
+                    grid('metatitles', 'context', array('alterTitle' => 'Взятый из контекста', 'gridId' => 'component'));
+                        grid('metatitles', 'up', array('alterTitle' => 'Уровень', 'gridId' => 'context'));
+                        grid('metatitles', 'source', array('gridId' => 'context'));
+                        grid('metatitles', 'fieldId', array('gridId' => 'context'));
+                    grid('metatitles', 'postfix', array('editor' => '1', 'gridId' => 'component'));
+            } else {
+                section('metatitles', array (
+                    'sectionId' => 'fsection2factions',
+                    'entityId' => 'metatag',
+                    'title' => 'Компоненты мета-тегов',
+                    'extends' => 'Indi_Controller_Admin_Meta',
+                    'defaultSortField' => 'move',
+                    'type' => 'o',
+                    'groupBy' => 'tag',
+                    'rowsetSeparate' => 'yes',
+                    'expand' => 'all',
+                ));
+                section('metatitles')->nested('grid')->delete();
+                section2action('metatitles','index', array (
+                    'profileIds' => '1',
+                    'fitWindow' => 'n',
+                ));
+                section2action('metatitles','form', array('profileIds' => '1'));
+                section2action('metatitles','save', array('profileIds' => '1'));
+                section2action('metatitles','delete', array('profileIds' => '1'));
+                section2action('metatitles','up', array('profileIds' => '1'));
+                section2action('metatitles','down', array('profileIds' => '1'));
+                grid('metatitles','type', true);
+                grid('metatitles','move', true);
+                grid('metatitles','tag', true);
+                grid('metatitles','component', array('alterTitle' => 'Компонент'));
+                grid('metatitles','prefix', array (
+                    'gridId' => 'component',
+                    'editor' => 1,
+                ));
+                grid('metatitles','content', array('gridId' => 'component'));
+                grid('metatitles','context', array (
+                    'alterTitle' => 'Взятый из контекста',
+                    'gridId' => 'component',
+                ));
+                grid('metatitles','up', array (
+                    'alterTitle' => 'Уровень',
+                    'tooltip' => 'Количество шагов вверх по иерархии разделов',
+                    'gridId' => 'context',
+                ));
+                grid('metatitles','source', array('gridId' => 'context'));
+                grid('metatitles','fieldId', array('gridId' => 'context'));
+                grid('metatitles','postfix', array (
+                    'gridId' => 'component',
+                    'editor' => 1,
+                ));
+                alteredField('metatitles', 'move', array('mode' => 'hidden'));
+                alteredField('metatitles', 'fsectionId', array('mode' => 'readonly'));
+                alteredField('metatitles', 'fsection2factionId', array('mode' => 'readonly'));
+            }
         }
         die('ok');
     }

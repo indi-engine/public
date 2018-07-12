@@ -84,10 +84,10 @@ $(document).ready(function(){
             // Auth
 			VK.Auth.login(function (response) {
 				if (response.session) {
-					VK.Api.call('getUserInfo', {}, function(r) {
+					VK.Api.call('getUserInfo', {v: '5.80'}, function(r) {
 						if (r.response) {
 							MYid = r.response['user_id'];
-							VK.Api.call('getProfiles', {uids: MYid, fields: 'nickname,photo_big',format: 'JSON'}, function(z) {
+							VK.Api.call('getProfiles', {v: '5.80', uids: MYid, fields: 'nickname,photo_big',format: 'JSON'}, function(z) {
 								$.post('/', {authType: 'vk', params: z.response[0]}, callback);
 							});
 						} 

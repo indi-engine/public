@@ -38,4 +38,23 @@ class Admin_MigrationController extends Indi_Controller {
         }
         die('ok');
     }
+    public function othersAction() {
+
+        // Other things
+        entity('faction', array('system' => 'o'));
+        entity('url', array('system' => 'o'));
+        entity('metatag', array('system' => 'o'));
+        entity('fsection', array('system' => 'o'));
+        entity('fsection2faction', array('system' => 'o'));
+        field('fsection2faction', 'allowNoid', array('title' => 'Разрешено не передавать id в uri', 'columnTypeId' => 'BOOLEAN', 'elementId' => 'check'));
+        field('fsection2faction', 'row', array('title' => 'Над записью', 'columnTypeId' => 'ENUM', 'elementId' => 'radio',
+            'defaultValue' => 'existing', 'relation' => 'enumset', 'storeRelationAbility' => 'one'));
+        enumset('fsection2faction', 'row', 'existing', array('title' => 'Существующей'));
+        enumset('fsection2faction', 'row', 'new', array('title' => 'Новой'));
+        enumset('fsection2faction', 'row', 'any', array('title' => 'Любой'));
+        field('fsection2faction', 'where', array('title' => 'Где брать идентификатор', 'columnTypeId' => 'VARCHAR(255)', 'elementId' => 'string'));
+
+        // Exit
+        die('ok');
+    }
 }

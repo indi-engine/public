@@ -24,9 +24,22 @@ class Menu extends Indi_Db_Table {
         // Shortcut to request uri
         $ruri = $_SERVER['REQUEST_URI'];
 
+        // Turned off menu items
+        $off = array();
+        
         // Foreach menu item
         foreach ($rowset as $row) {
-
+            
+            // Ensure that items having `toggle` = 'y' will be skipped in case if their parents have `toggle` = 'n'
+            if ($row->toggle == 'n' || $off[$row->menuId]) {
+                
+                // Remember
+                $off[$row->id] = true;
+                
+                // Jump to next item
+                continue;
+            }
+            
             // Build href
             if ($row->linked == 'n') {
                 $row->href = $row->url;
@@ -49,6 +62,9 @@ class Menu extends Indi_Db_Table {
         while (array_key_exists($upperID, $idA))
            $upperID = $rowset->at($idA[$upperID])->assign(array('active' => true))->menuId;
 
+        // Exclude turned off items, or items that are turned on but are nested under turned off parents
+        $rowset->exclude(array_keys($off));
+           
         // Return nesting tree
         return $rowset->toNestingTree();
     }

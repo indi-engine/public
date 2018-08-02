@@ -761,11 +761,15 @@ $(document).ready(function(){
             // For each matching element
             $(this).find('a[href*="#"]').each(function(){
                 $(this).click(function(event){
-
+                    var iname;
+                    
                     // If this is not an on-page link, or it won't be impossible to determine target - return
                     if ((this.hostname != location.hostname)
                         || (this.pathname.replace(/^\//, '') != location.pathname.replace(/^\//, ''))
                         || ($(this).attr('href') == '#')) return;
+
+                    // Check whether input name was additionally specified
+                    if (iname = this.hash.split(':')[1]) this.hash = this.hash.split(':')[0];
 
                     // Figure out element to scroll to
                     var target = $(this.hash); target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
@@ -781,6 +785,9 @@ $(document).ready(function(){
 
                     // Animate with callback
                     $(options.layer).animate({scrollTop: target.offset().top + offset}, 500, function() {
+
+                        // If input name was additionally specified - focus it instead of target
+                        if (iname) return $(target).find('[name='+iname+']').first().focus();
 
                         // Must change focus!
                         var $target = $(target); $target.focus();

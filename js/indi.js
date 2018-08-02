@@ -761,7 +761,7 @@ $(document).ready(function(){
             // For each matching element
             $(this).find('a[href*="#"]').each(function(){
                 $(this).click(function(event){
-                    var iname;
+                    var iname, hash;
                     
                     // If this is not an on-page link, or it won't be impossible to determine target - return
                     if ((this.hostname != location.hostname)
@@ -769,10 +769,10 @@ $(document).ready(function(){
                         || ($(this).attr('href') == '#')) return;
 
                     // Check whether input name was additionally specified
-                    if (iname = this.hash.split(':')[1]) this.hash = this.hash.split(':')[0];
+                    hash = (iname = this.hash.split(':')[1]) ? this.hash.split(':')[0] : this.hash;
 
                     // Figure out element to scroll to
-                    var target = $(this.hash); target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+                    var target = $(hash); target = target.length ? target : $('[name=' + hash.slice(1) + ']');
 
                     // Does a scroll target exist?
                     if (!target.length) return;

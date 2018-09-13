@@ -10,13 +10,15 @@ class Menu extends Indi_Db_Table {
 
     /**
      * Get nesting rowset of menu items, with auto-built `href` props and auto-marked as `active` where need
+     * You can use $toggle arg to specify toggle-column name
      *
+     * @param $toggle
      * @return Indi_Db_Table_Rowset
      */
-    public function init()	{
+    public function init($toggle = 'toggle')	{
 
         // Fetch menu items
-        $rowset = $this->fetchTree('`toggle` = "y"', 'move')->foreign('staticpageId');
+        $rowset = $this->fetchTree('`'.$toggle.'` = "y"', 'move')->foreign('staticpageId');
 
         // Collect indexes by ids
         foreach ($rowset as $idx => $row) $idA[$row->id] = $idx;
@@ -31,7 +33,7 @@ class Menu extends Indi_Db_Table {
         foreach ($rowset as $row) {
             
             // Ensure that items having `toggle` = 'y' will be skipped in case if their parents have `toggle` = 'n'
-            if ($row->toggle == 'n' || $off[$row->menuId]) {
+            if ($row->$toggle == 'n' || $off[$row->menuId]) {
                 
                 // Remember
                 $off[$row->id] = true;

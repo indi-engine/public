@@ -107,3 +107,6 @@ form[target^="i-form-target"] iframe[name^="i-form-target"] {
 .ui-dialog .ui-dialog-content {
     /*font: 100 24px/32px 'Futura New', sans-serif;*/
 }
+.ui-datepicker-calendar .ui-datepicker-unselectable.ui-state-disabled {
+    pointer-events: auto;
+}

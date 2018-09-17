@@ -617,6 +617,203 @@ $(document).ready(function(){
             }
         }
 
+        /**
+         * Set disabled options
+         *
+         * @param disabled
+         */
+        $.fn.setDisabledOptions = function (disabled) {
+            var field = $(this), tag = field.prop('tagName'), i, name = field.attr('name'), cfg;
+
+            // If tag is 'SELECT'
+            if (tag == 'SELECT') {
+
+                // Remove 'disabled' attr from all options where it is set up
+                field.find('option[disabled]').removeAttr('disabled');
+
+                // Append 'disabled' attr to all options having values mentioned in `disabled` arg
+                for (i = 0; i < disabled.length; i++)
+                    field.find('option[value="' + disabled[i] + '"]')
+                        .attr('disabled', 'disabled');
+
+                // If this control element is wrapped by select2 plugin
+                if (field.data('select2')) {
+
+                    // Get select2 initial config
+                    cfg = field.data('select2-cfg');
+
+                    // Rewrap using initial config
+                    field.select2('destroy').select2(cfg);
+                }
+
+            // Else if tag is 'INPUT'
+            } else if (tag == 'INPUT') {
+
+                // If JqueryUI's datepicker plugin is used
+                if (field.data('datepicker')) {
+
+                    // Set disabled dates
+                    field.data('disabledDates', disabled);
+
+                    // Refresh datepicker to apply new collection of disabled dates
+                    field.datepicker('refresh');
+                }
+            }
+        }
+
+        /**
+         *  Refresh options, that are selectable within space-fields.
+         *  This function prevent user from selecting options leading to
+         *  schedule overlapping
+         *
+         * @param tmpDate
+         */
+        $.fn.refreshSpaceOptions = function(tmpDate) {
+            var form = $(this), data = {}, _ = form.data('ispace'), dd, field, name, dp;
+
+            // Collect values for all space-fields
+            for (name in _.change) {
+
+                // Find field
+                field = form.find('[name="'+name+'"]');
+
+                // If not found - skip
+                if (!field.length) continue;
+
+                // Setup value as current field's value or current field's zero-value
+                data[name] = field.val() || _.change[name];
+
+                // If `name` refers to calendar-field
+                if (name == _.boundchange) {
+
+                    // If `tmpDate` arg is given - this means that user changed calendar's
+                    // current month, and `tmpDate` is a date in the middle of that month,
+                    // so we use it instead of actual calendar-field's raw value / datepicker's value
+                    if (tmpDate) data[name] = tmpDate;
+
+                    // Else, if calendar-field has JqueryUI's datepicker attached - use it's value instead
+                    // of calendar-field's raw value, as it can be in format not compatible for request
+                    else if (field.datepicker('getDate') && field.data('datepicker')) {
+                        data[name] = $.datepicker.formatDate('yy-mm-dd', field.datepicker('getDate'));
+                    }
+                }
+            }
+
+            // Get section
+            var section = form.attr('action').replace(indi.std, '').replace(/^\/|\/$/, '').split('/')[0];
+
+            // Make a special request to get the inaccessible values for each field considering their current values
+            $.post('/' + section + '/form/consider/duration/', data, function(json) {
+
+                // Get info about disabled values for each field
+                dd = json.disabled;
+
+                // Apply those disabled values, so only non-disabled will remain accessible
+                for (var name in dd)
+                    if ((field = form.find('[name="'+name+'"]')).length)
+                        field.setDisabledOptions(dd[name]);
+
+            }, 'json');
+        }
+
+        /**
+         * Bind a package of event listeners to form elements, involved in scheduling,
+         * so unavailable options will be refreshed each time any space-field changed
+         *
+         * @param events
+         * @return {*}
+         */
+        $.fn.ispace = function(events) {
+
+            // For each element within set of matched elements
+            $(this).each(function(){
+
+                // Check that we deal only with forms
+                if ($(this).prop('tagName') != 'FORM') return indi.mbox({msg: 'Это не форма'});
+
+                // Declare variables
+                var form = $(this), field, name;
+
+                // Save events
+                form.data('ispace', events);
+
+                // Bind handers for 'change' event
+                for (name in events.change) {
+
+                    // Find field by name
+                    field = form.find('[name="' + name.replace(/\[\]$/, '') +'"]');
+
+                    // If not found - return
+                    if (!field.length) continue;
+
+                    // Bind listener on 'change' event
+                    field.on('change', function(){
+                        if ($(this).data('watched')) return;
+                        form.refreshSpaceOptions();
+                    });
+                }
+
+                // Do initial refresh
+                form.refreshSpaceOptions();
+
+                // If calendar-field name is specified
+                if (name = events.boundchange) {
+
+                    // Find calendar-field by name
+                    field = form.find('[name="' + name.replace(/\[\]$/, '') +'"]');
+
+                    // If not found - return
+                    if (!field.length) return;
+
+                    // Bind listener on 'boundchange' event
+                    field.on('boundchange', function(){
+                        form.refreshSpaceOptions();
+                    });
+
+                    // If JqueryUI's datepicker is used
+                    if (field.data('datepicker')) {
+
+                        // Bind a handler on onChangeMonthYear event
+                        field.datepicker('option', 'onChangeMonthYear', function(y, m, dp) {
+                            var Ym = y + '-' + (m > 9 ? m : '0' + m);
+                            var date = $(this).datepicker('getDate');
+                            var Ymd = jQuery.datepicker.formatDate('yy-mm-dd', date).split('-');
+                            var d = Ym == Ymd[0] + '-' + Ymd[1] ? Ymd[2] : '15';
+                            $(this).data('lastMonth' , Ym);
+                            form.refreshSpaceOptions(Ym + '-' + d);
+                        });
+
+                        // Bind a handler on onClose event
+                        field.datepicker('option', 'onClose', function(y, m) {
+                            var date = $(this).datepicker('getDate'), lastMonth = $(this).data('lastMonth');
+                            if (!lastMonth) return;
+                            if (lastMonth == jQuery.datepicker.formatDate('yy-mm', date)) return;
+                            $(this).removeData('lastMonth');
+                            form.refreshSpaceOptions();
+                        });
+
+                        // Setup empty array as a value of disabledDates data-param
+                        field.data('disabledDates', []);
+
+                        // Setup beforeShowDay processor for day-cells to be enabled/disabled
+                        field.datepicker('option', 'beforeShowDay', function(date) {
+                            date = jQuery.datepicker.formatDate('yy-mm-dd', date);
+                            var show = !~$(this).data('disabledDates').indexOf(date),
+                                tip = show ? '' : 'Эта дата недоступна для выбора';
+                            return [show, '', tip];
+                        });
+                    }
+                }
+            });
+
+            // Return
+            return $(this);
+        };
+
+        /**
+         *
+         * @param options
+         */
         $.fn.iform = function(options) { $(this).each(function(){
 
             // Check that we deal only with forms
@@ -627,11 +824,15 @@ $(document).ready(function(){
 
             // Default options
             var defaults = {
-                submit: '.i-submit'
+                submit: '.i-submit',
+                reset: '[type=reset]'
             }
 
             // Apply default options
             options = $.extend({}, defaults, options);
+
+            // Bind events on space fields
+            if (options.spaceFieldsEvents) $(this).ispace(options.spaceFieldsEvents);
 
             // Make sure that form will be submitted once submit button/link/etc is clicked
             $(this).find(options.submit).click(function(){
@@ -643,6 +844,22 @@ $(document).ready(function(){
                 $(this).parents('form').submit();
 
                 // Return false (for case if <a>-element is used as submit button)
+                return false;
+            });
+
+            // Bind handler on form-reset
+            $(this).find(options.reset).click(function(){
+
+                // Basic reset
+                $(this).parents('form')[0].reset();
+
+                // Reset select2
+                $('select.select2-hidden-accessible').each(function(){
+                    $(this).data('select2').val(0);
+                    $(this).data('select2').trigger('change');
+                });
+
+                // Return
                 return false;
             });
 
@@ -819,6 +1036,13 @@ $(document).ready(function(){
                 // For each field, mentioned in cfg.on
                 cfg.on.forEach(function(on){
 
+                    // Disable watcher-field of any of watched fields have zero-value
+                    if (on.required && !parseInt(form.find('[name="' + on.name + '"]').val()))
+                        me.attr('disabled', 'disabled');
+
+                    // Setup data-watched=true attr on master element
+                    if (cfg.odata) form.find('[name="' + on.name + '"]').data('watched', true);
+
                     // Bind listener for 'change' event
                     form.find('[name="' + on.name + '"]').change(function(){
 
@@ -833,15 +1057,11 @@ $(document).ready(function(){
                         // Get data
                         var info = me.iwatchinfo();
 
-                        // If `disabled` flag was set to `true` - disable field
-                        if (info.disable) me.attr('disabled', 'disabled'); else {
+                        // If `disabled` flag was set to `true` - disable field, else enable
+                        if (info.disable) me.attr('disabled', 'disabled'); else me.removeAttr('disabled');
 
-                            // Enable it back otherwise
-                            me.removeAttr('disabled');
-
-                            // Call callback
-                            if (typeof cfg.callback == 'function') cfg.callback.apply(me, [me, info.data]);
-                        }
+                        // Call callback
+                        if (typeof cfg.callback == 'function') cfg.callback.apply(me, [me, info.data]);
                     });
                 });
             });
@@ -944,6 +1164,57 @@ $(document).ready(function(){
 
         // Post-process response to pick and show errors or other messages
         $(document).ajaxComplete(indi.parseResponse);
+
+        /**
+         * Workaround for select2-plugin
+         *
+         * @param cfg
+         */
+        $.fn.select22 = function(cfg) {
+
+            // Default config + custom config
+            cfg = $.extend({
+                width: '100%',
+                minimumResultsForSearch: Infinity,
+                placeholder: {id: '0', text: ''},
+                allowClear: true
+            }, cfg);
+
+            $(this).each(function(){
+                $(this).data('select2-cfg', cfg);
+                if ($(this).find('option').length) $(this).prepend('<option value="0"></option>').val(0);
+                $(this).select2(cfg);
+            });
+        }
+
+        /**
+         * Refresh SELECT's option collection
+         */
+        $.fn.odata = function(json) { $(this).each(function(){
+            var optionA = [], cfg;
+
+            // If current element is not a SELECT-element - return
+            if ($(this).prop('tagName') != 'SELECT') return;
+
+            // Build options collection
+            optionA.push('<option value="0"></option>');
+            json.data.forEach(function(data, idx){
+                optionA.push('<option value="'+json.ids[idx] +'">' + data.title + '</option>');
+            });
+
+            // Refresh options collection and fire 'change' event
+            $(this).html(optionA.join('')).change();
+
+            // If this control element is wrapped by select2 plugin
+            if ($(this).data('select2')) {
+
+                // Get select2 initial config
+                cfg = $(this).data('select2-cfg');
+
+                // Rewrap using initial config
+                $(this).select2('destroy').select2(cfg);
+            }
+        })}
 
         // If 'std' attribute is not empty - setup additional ajax config
         if (!((indi.std = $('script[std]').attr('std')).length == 0))

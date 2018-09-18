@@ -869,8 +869,8 @@ $(document).ready(function(){
             });
 
             // Support .select2
-            $(this).find('.select2').click(function(){
-                $(this).ierror(false);
+            $(document).on('click', '.select2', function(){
+                $(this).data('element').ierror(false);
             });
 
             // Remove hidden fields, created for each fileupload field

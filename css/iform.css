@@ -110,3 +110,6 @@ form[target^="i-form-target"] iframe[name^="i-form-target"] {
 .ui-datepicker-calendar .ui-datepicker-unselectable.ui-state-disabled {
     pointer-events: auto;
 }
+.ui-datepicker-div {
+    z-index: 10;
+}

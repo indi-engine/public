@@ -215,10 +215,10 @@ $(document).ready(function(){
                     // If field is currently hidden - we duplicate erroк message for it to be shown within
                     // Ext.MessageBox, additionally
                     if (cmp.css('display') == 'none' && !cmp.attr('data-validetta-after')) wholeFormMsg.push(errorByFieldO[i]);
-                    
+
                     // Else
                     else {
-                    
+
                         // Mark field as invalid
                         if (cmp.attr('data-validetta-after')) {
                             $(cmp.attr('data-validetta-after')).markInvalid(certainFieldMsg);
@@ -228,7 +228,7 @@ $(document).ready(function(){
 
                         // Focus field
                         if (!j) $.scrollTo(cmp.attr('data-validetta-after') || cmp);
-                        
+
                         // Error bubble should be removed once field got focused again
                         if (!cmp.attr('has-focus-handler')) {
                             cmp.attr('has-focus-handler', 'true');
@@ -240,7 +240,7 @@ $(document).ready(function(){
                         // Increment visible invalid-fields counter
                         j++;
                     }
-                    
+
                 // Else mismatch message is related to field, that currently, for some reason, is not available
                 // within the form - push that message to the wholeFormMsg array
                 } else wholeFormMsg.push(errorByFieldO[i]);
@@ -373,10 +373,10 @@ $(document).ready(function(){
 
             var json, wholeFormMsg = [], mismatch, errorByFieldO, msg, form = options.form, trigger,
                 certainFieldMsg, cmp, seoA = Indi.serverErrorObjectA(response.responseText), sesA,
-                logger = console && (console.log || console.error), boxA = [], urlOwner = options;
+                logger = console && (console.log || console.error), boxA = [], urlOwner = options, j = false;
 
             // Remove 'answer' param, if it exists within url
-            urlOwner.url = urlOwner.url.replace(/\banswer=(ok|no|cancel)/, '');
+            if (urlOwner.url) urlOwner.url = urlOwner.url.replace(/\banswer=(ok|no|cancel)/, '');
 
             // todo: Hide loadmask
 
@@ -483,15 +483,21 @@ $(document).ready(function(){
                         /*if (Ext.isString(certainFieldMsg))
                             certainFieldMsg = certainFieldMsg.replace('"' + cmp.fieldLabel + '"', '').replace(/""/g, '');*/
 
-                        // If field is currently hidden - we duplicate error message for it to be shown within
-                        // Ext.MessageBox, additionally
+                        // If field is currently hidden - push error message to the list of msgs, to be shown within popup
                         if ($(cmp).is(':hidden') && !$(cmp).attr('i-field-error-after')) wholeFormMsg.push(errorByFieldO[i]);
 
-                        // Mark field as invalid
-                        else $(cmp).ierror(certainFieldMsg);
+                        // Else
+                        else {
 
-                        // Else mismatch message is related to field, that currently, for some reason, is not available
-                        // within the form - push that message to the wholeFormMsg array
+                            // Mark field as invalid
+                            $(cmp).ierror(certainFieldMsg);
+
+                            // Scroll to it
+                            if (!j && (j = true) && $.scrollTo) $.scrollTo($(cmp).attr('i-field-error-after') || cmp);
+                        }
+
+                    // Else mismatch message is related to field, that currently, for some reason, is not available
+                    // within the form - push that message to the wholeFormMsg array
                     } else wholeFormMsg.push(errorByFieldO[i]);
                 });
 
@@ -943,11 +949,14 @@ $(document).ready(function(){
                     // Remove error messages
                     form.find('.i-field-error').remove();
 
+                    // Append trailing zero
+                    var row = form.attr('data-row'); if (row && row.match(/-$/)) row += '0';
+
                     // Parse response and detect success/failure
                     success = Indi.parseResponse(null, response, {
                         form: form,
                         url: form.attr('action'),
-                        row: form.attr('data-row')
+                        row: row
                     });
 
                     // Remove iframe

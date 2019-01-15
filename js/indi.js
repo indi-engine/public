@@ -508,10 +508,10 @@ $(document).ready(function(){
                     msg = (wholeFormMsg.length > 1 || trigger ? '&raquo; ' : '') + wholeFormMsg.join('<br>&raquo; ');
 
                     // If this is a mismatch, caused by background php-triggers
-                    if (trigger) msg = 'При выполнении вашего запроса, одна из автоматически производимых операций, в частности над записью типа "'
+                    if (trigger && mismatch.entity) msg = Indi.lang.I_ROWSAVE_ERROR_MFLUSH_MSG1
                         + mismatch.entity.title + '"'
                         + (parseInt(mismatch.entity.entry) ? ' [id#' + mismatch.entity.entry + ']' : '')
-                        + ' - выдала следующие ошибки: <br><br>' + msg;
+                        + Indi.lang.I_ROWSAVE_ERROR_MFLUSH_MSG2 + ': <br><br>' + msg;
 
                     // Show message box
                     boxA.push({

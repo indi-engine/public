@@ -154,9 +154,6 @@ $(document).ready(function(){
             return param ? getO[param] : getO;
         }
 
-		// If there is no <script> element in dom, that has 'std' attribute - return
-        if (!$('script[std]').length) return indi;
-
         // Make extjs injections, if needed
         $(function(){
             $('[i-load]').each(function(){
@@ -1226,7 +1223,7 @@ $(document).ready(function(){
         })}
 
         // If 'std' attribute is not empty - setup additional ajax config
-        if (!((indi.std = $('script[std]').attr('std')).length == 0))
+        if ($('script[std]').attr('std') && !((indi.std = $('script[std]').attr('std')).length == 0))
             $.ajaxSetup({
 
                 // Setup 'beforeSend' function

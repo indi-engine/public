@@ -258,4 +258,25 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
             ? $this->section->alias . '/' . $this->action->alias . '.php'
             : 'index.php';
     }
+
+    /**
+     * Prepare filter combo data
+     *
+     * @param $fields
+     */
+    public function filters($fields) {
+
+        // Foreach field in comma-separated list of fields (or array)
+        foreach (ar($fields) as $field) {
+
+            // Create `search` row instance
+            $filter = Indi::model('Search')->createRow([
+                'fieldId' => $this->fields($field)->id,
+                'consistence' => 2
+            ], true);
+
+            // Feed ``Setup combo data
+            Indi::view()->filterCombo($filter, true);
+        }
+    }
 }

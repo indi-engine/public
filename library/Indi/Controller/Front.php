@@ -590,7 +590,7 @@ class Indi_Controller_Front extends Indi_Controller {
     public function filtersWHERE($FROM = '', $search = '') {
 
         // If $_GET['search'] is not explicitly given, walk through other $_GET params
-        if (!Indi::get()->search) foreach (Indi::get() as $key => $value) {
+        if (!Indi::get()->search || Indi::get()->search == '[]') foreach (Indi::get() as $key => $value) {
 
             // If param name is either 'sort', 'limit' or 'page' - continue
             if (in($key, ar('sort,limit,page,keyword'))) continue;

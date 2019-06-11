@@ -332,6 +332,16 @@ class Indi_Controller_Front extends Indi_Controller {
         // Nest static page uris
         $out = Indi_Uri::nspu($out);
 
+        // If certain design should be used, and special dir exists for styles/scripts/etc files for that certain design
+        if ($d = Indi::ini()->design) if (is_dir(DOC . STD . '/www/static/' . $d)) {
+
+            // Prepend /static/{design}/ to all urls, specified in 'href' and 'src' attributes within 'link', 'script' and 'img' tags
+            $out = preg_replace('~<(link|script|img)(.*?)(href|src)=(["\'])([^/][^:]*?)\4~', '<$1$2$3=$4/static/' . $d . '/$5$4', $out);
+
+            // Do same for expressions like 'background: url('
+            $out = preg_replace('~(: url\()(["\']?)([^/][^:]*?);\2~', '$1$2/static/' . $d . '/$3$2', $out);
+        }
+
         // If project runs not from document root, but from some subfolder within document root
         if (STD) {
 

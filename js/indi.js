@@ -910,7 +910,7 @@ $(document).ready(function(){
                 if (options.stripes) $(this).find(options.submit).addClass('i-stripes');
 
                 // Bind handler on form target iframe's `load` event
-                $(this).find('iframe[name="' + name + '"]').load(function(){
+                $(this).find('iframe[name="' + name + '"]').on('load', function(){
                     var doc, contentNode, frame = this, success, response = {responseText: '', responseXML: null},
                         form = $(frame).parents('form');
 

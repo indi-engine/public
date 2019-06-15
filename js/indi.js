@@ -553,7 +553,7 @@ $(document).ready(function(){
                         buttons: 'Ext.Msg.OK',
                         icon: "Ext.Msg[json.success ? 'INFO' : 'WARNING']",
                         modal: true,
-                        fn: options.mbox.fn
+                        fn: options.mbox ? options.mbox.fn : function(){}
                     });
 
                 // Reset mbox usage flag back to `true`

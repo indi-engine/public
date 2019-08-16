@@ -129,11 +129,11 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
             // If current section is a non-single-row section
             if ($this->section->type == 'r' && $this->section2action->row != 'new') {
 
-                // If `section2action` entry's `where` prop - is not an empty string
-                if (strlen($this->section2action->where)) $majorWHERE = $this->section2action->compiled('where');
-
                 // If 'id' uri param exists - setup $majorWHERE clause based on it
-                else if (Indi::uri('id')) $majorWHERE = '`id` = "' . Indi::uri('id') . '"';
+                if (Indi::uri('id')) $majorWHERE = '`id` = "' . Indi::uri('id') . '"';
+
+                // If `section2action` entry's `where` prop - is not an empty string
+                else if (strlen($this->section2action->where)) $majorWHERE = $this->section2action->compiled('where');
 
             // Else if current section's type is 'single-row', and special expression for row identification was set
             } else if ($this->section->type == 's' && strlen($this->section->where))
@@ -155,7 +155,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 if (!($this->row = $this->model->fetchRow($where))) {
 
                     // If only existing rows are allowed to be operated by current action
-                    if (!$this->section2action->row || $this->section2action->row == 'existing')
+                    if (!$this->section2action->row || $this->section2action->row == 'existing' || Indi::uri('id'))
 
                         // Return an error
                         return I_ACCESS_ERROR_ROW_DOESNT_EXIST;

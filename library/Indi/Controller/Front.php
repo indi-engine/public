@@ -332,6 +332,16 @@ class Indi_Controller_Front extends Indi_Controller {
         // Nest static page uris
         $out = Indi_Uri::nspu($out);
 
+        // If certain design should be used, and special dir exists for styles/scripts/etc files for that certain design
+        if ($d = Indi::ini()->design) if (is_dir(DOC . STD . '/www/static/' . $d)) {
+
+            // Prepend /static/{design}/ to all urls, specified in 'href' and 'src' attributes within 'link', 'script' and 'img' tags
+            $out = preg_replace('~<(link|script|img)(.*?)(href|src)=(["\'])([^/][^:]*?)\4~', '<$1$2$3=$4/static/' . $d . '/$5$4', $out);
+
+            // Do same for expressions like 'background: url('
+            $out = preg_replace('~(: url\()(["\']?)([^/][^:]*?);\2~', '$1$2/static/' . $d . '/$3$2', $out);
+        }
+
         // If project runs not from document root, but from some subfolder within document root
         if (STD) {
 
@@ -478,14 +488,14 @@ class Indi_Controller_Front extends Indi_Controller {
 
     /**
      * Prepare arguments for $this->_odata() function call, and call that function for fetching combo options data.
-     * This function handles all cases, related to combo options data fetch, such as
-     * page-by-page appending/prepending, combo-keyword lookup, fetch satellited data (for example fetch cities for second
-     * combo when country was selected in first combo), and all this for form and sibling combos
+     * This function handles all cases, related to combo options data fetch, such as page-by-page appending/prepending,
+     * combo-keyword lookup, fetch consider-fields dependent data (for example fetch cities for second combo when
+     * country was selected in first combo), and all this for form and sibling combos
      *
      * We do all these things by passing this call to formActionOdata() function
      *
      * @param string $for A name of field, that combo data should be fetched for
-     * @param array $post Request params, required to make a proper fetch (page number, keyword, value of satellite)
+     * @param array $post Request params, required to make a proper fetch (page number, keyword, consider-fields' values)
      */
     public function createActionOdata($for, $post) {
         $this->formActionOdata($for, $post);
@@ -590,7 +600,7 @@ class Indi_Controller_Front extends Indi_Controller {
     public function filtersWHERE($FROM = '', $search = '') {
 
         // If $_GET['search'] is not explicitly given, walk through other $_GET params
-        if (!Indi::get()->search) foreach (Indi::get() as $key => $value) {
+        if (!Indi::get()->search || Indi::get()->search == '[]') foreach (Indi::get() as $key => $value) {
 
             // If param name is either 'sort', 'limit' or 'page' - continue
             if (in($key, ar('sort,limit,page,keyword'))) continue;

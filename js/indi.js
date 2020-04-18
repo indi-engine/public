@@ -549,9 +549,11 @@ $(document).ready(function(){
                     boxA.push({
                         title: indi.lang[json.success ? 'I_MSG' : 'I_ERROR'],
                         msg: json.msg,
+                        json: json,
                         buttons: 'Ext.Msg.OK',
                         icon: "Ext.Msg[json.success ? 'INFO' : 'WARNING']",
-                        modal: true
+                        modal: true,
+                        fn: options.mbox ? options.mbox.fn : function(){}
                     });
 
                 // Reset mbox usage flag back to `true`
@@ -590,7 +592,7 @@ $(document).ready(function(){
                         click: function(e) {
                             var answer = $(e.target).text().toLowerCase();
                             $(this).dialog('destroy');
-                            if (cfg.fn) cfg.fn.call(this, answer);
+                            if (cfg.fn) cfg.fn.call(this, answer, cfg.json);
                         }
                     });
 
@@ -603,19 +605,22 @@ $(document).ready(function(){
                     modal: cfg.modal,
                     width: 'auto',
                     maxWidth: '50%',
-                    create: cfg.create
+                    create: cfg.create,
+                    close: function(){
+                        if (cfg.fn) cfg.fn.call(this, 'close', cfg.json);
+                    }
                 });
 
             } else {
                 if (buttonS == 'OKCANCEL') {
                     if (confirm(cfg.msg)) {
-                        if (cfg.fn) cfg.fn.call(this, 'ok');
+                        if (cfg.fn) cfg.fn.call(this, 'ok', cfg.json);
                     } else {
-                        if (cfg.fn) cfg.fn.call(this, 'cancel');
+                        if (cfg.fn) cfg.fn.call(this, 'cancel', cfg.json);
                     }
                 } else {
                     alert(cfg.msg);
-                    if (cfg.fn) cfg.fn.call(this);
+                    if (cfg.fn) cfg.fn.call(this, 'ok', cfg.json);
                 }
             }
         }
@@ -828,7 +833,8 @@ $(document).ready(function(){
             // Default options
             var defaults = {
                 submit: '.i-submit',
-                reset: '[type=reset]'
+                reset: '[type=reset]',
+                mbox: {}
             }
 
             // Apply default options
@@ -910,7 +916,7 @@ $(document).ready(function(){
                 if (options.stripes) $(this).find(options.submit).addClass('i-stripes');
 
                 // Bind handler on form target iframe's `load` event
-                $(this).find('iframe[name="' + name + '"]').load(function(){
+                $(this).find('iframe[name="' + name + '"]').on('load', function(){
                     var doc, contentNode, frame = this, success, response = {responseText: '', responseXML: null},
                         form = $(frame).parents('form');
 
@@ -953,7 +959,8 @@ $(document).ready(function(){
                     success = Indi.parseResponse(null, response, {
                         form: form,
                         url: form.attr('action'),
-                        row: row
+                        row: row,
+                        mbox: options.mbox
                     });
 
                     // Remove iframe

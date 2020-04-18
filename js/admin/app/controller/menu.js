@@ -1,11 +1,8 @@
 Ext.define('Indi.controller.menu', {
-    extend: 'Indi.Controller',
+    extend: 'Indi.lib.controller.Controller',
     actionsConfig: {
         form: {
-            formItem$MenuId: {allowBlank: true},
-            formItem$Linked: {nojs: true},
             formItem$Url: {
-                allowBlank: true,
                 considerOn: [{
                     name: 'linked'
                 }],
@@ -16,6 +13,7 @@ Ext.define('Indi.controller.menu', {
                 }
             },
             formItem$StaticpageId: {
+                jump: '/staticpages/form/id/{id}/',
                 considerOn: [{
                     name: 'linked'
                 }],

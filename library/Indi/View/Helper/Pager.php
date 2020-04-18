@@ -17,13 +17,13 @@ class Indi_View_Helper_Pager {
     public function pager($display = 5) {
 
         // If there was no 'limit' param among $_GET params - return
-        if (!Indi::get('limit')) return;
+        if (!Indi::get('limit') && !t()->section->defaultLimit) return;
 
         // Setup current page
         $this->page = Indi::get()->page;
 
         // Setup rows-per-page count
-        $limit = Indi::get()->limit;
+        $limit = Indi::get()->limit ?: t()->section->defaultLimit;
 
         // Setup total found rows
         $found = Indi::view()->rowset->found();
@@ -41,7 +41,7 @@ class Indi_View_Helper_Pager {
         if ($pages > 1) {
 
             // If current page is not first page - prepend pages listing with special 'previous' link
-            if ($this->page > 1) {?><a data-page="<?=$this->page - 1?>" class="previous-link" href="<?=$this->href($this->page - 1)?>">Предыдущая</a><?}
+            if ($this->page > 1) {?><a data-page="<?=$this->page - 1?>" class="previous-link" href="<?=$this->href($this->page - 1)?>"><?=I_PAGER_PREV?></a><?}
 
             // If $display arg is non-zero
             if ($display) {
@@ -100,7 +100,7 @@ class Indi_View_Helper_Pager {
 
             // Another 'next' element, which will be outside span.pages element, but within div.pager element
             if ($this->page < $pages) {
-                ?><a data-page="<?=$this->page + 1?>" class="next-link" href="<?=$this->href($this->page + 1)?>">Следующая</a><?
+                ?><a data-page="<?=$this->page + 1?>" class="next-link" href="<?=$this->href($this->page + 1)?>"><?=I_PAGER_NEXT?></a><?
             }
         }
 

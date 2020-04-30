@@ -24,6 +24,10 @@ class Indi_View_Helper_Pager {
 
         // Setup rows-per-page count
         $limit = Indi::get()->limit ?: t()->section->defaultLimit;
+        
+        if (t()->section->splitBy) 
+            if ($split = t()->section->foreign('splitBy')->alias)
+                $limit /= t()->model->enumset($split)->count();
 
         // Setup total found rows
         $found = Indi::view()->rowset->found();

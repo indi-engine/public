@@ -16,6 +16,8 @@ $(document).ready(function(){
             I_AUTH: 'Авторизация',
             I_ACTION_DELETE_CONFIRM_TITLE: 'Подтверждение',
             I_ACTION_DELETE_CONFIRM_MSG: 'Вы уверены что хотите удалить запись',
+            I_ROWSAVE_ERROR_MFLUSH_MSG1: 'При выполнении вашего запроса, одна из автоматически производимых операций, в частности над записью типа "',
+            I_ROWSAVE_ERROR_MFLUSH_MSG2: ' - выдала следующие ошибки',
             name: 'ru'
         };
 
@@ -367,7 +369,7 @@ $(document).ready(function(){
          * @return {Boolean}
          */
         indi.parseResponse = function(event, response, options) {
-
+            if (!options) return;
             var json, wholeFormMsg = [], mismatch, errorByFieldO, msg, form = options.form, trigger,
                 certainFieldMsg, cmp, seoA = Indi.serverErrorObjectA(response.responseText), sesA,
                 logger = console && (console.log || console.error), boxA = [], urlOwner = options, j = false;

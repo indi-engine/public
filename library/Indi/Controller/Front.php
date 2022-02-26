@@ -376,9 +376,9 @@ class Indi_Controller_Front extends Indi_Controller {
 		if ($_SERVER['SERVER_PORT'] == 443) {
 
             // Append 'https://' to all urls, specified in 'href' and 'src' attributes within 'link', 'script' and 'img' tags
-			$html = preg_replace('/(<link[^>]+href\s*=\s*["\'])\//ui', '$1https://' . Indi::ini()->general->domain . '/', $html);
-            $html = preg_replace('/(<script[^>]+src\s*=\s*["\'])\//', '$1https://' . Indi::ini()->general->domain . '/', $html);
-            $html = preg_replace('/(<img[^>]+src\s*=\s*"["\'])/ui', '$1https://' . Indi::ini()->general->domain . '/', $html);
+			//$html = preg_replace('~(<link[^>]+href\s*=\s*["\'])\/([^\/])~ui', '$1https://' . Indi::ini()->general->domain . '/$2', $html);
+            //$html = preg_replace('~(<script.+?src\s*=\s*["\'])\/([^\/])~', '$1https://' . Indi::ini()->general->domain . '/$2', $html);
+            //$html = preg_replace('~(<img[^>]+src\s*=\s*"["\'])~ui', '$1https://' . Indi::ini()->general->domain . '/', $html);
 		}
 
         // Return
@@ -615,7 +615,10 @@ class Indi_Controller_Front extends Indi_Controller {
             if (is_string($search)) $search = array();
 
             // If $value is not an empty - create an array, and append that array into $search array
-            if (strlen($value)) $search[] = array($key => $value);
+            if (strlen($value)) {
+                if (!is_array($search)) $search = [];
+                $search []= array($key => $value);
+            }
         }
 
         // If some $_GET params can be used as filters - use them

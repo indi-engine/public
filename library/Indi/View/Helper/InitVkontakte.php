@@ -8,8 +8,7 @@ class Indi_View_Helper_InitVkontakte {
 
         // Include the vkontakte javascipt SDK
         ob_start();?>
-<script async src="//vkontakte.ru/js/api/openapi.js" type="text/javascript" charset="windows-1251"></script>
-<script type="text/javascript" src="//userapi.com/js/api/openapi.js?45"></script>
+<script type="text/javascript" src="https://vk.com/js/api/openapi.js?168"></script>
 <script type="text/javascript">VK.init({apiId: <?=$apiId?>});</script>
 <div id="vk_auth"></div>
 		<?$xhtml = ob_get_clean();

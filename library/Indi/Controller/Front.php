@@ -477,11 +477,14 @@ class Indi_Controller_Front extends Indi_Controller {
                 // Get final ORDER clause, built regarding column name and sorting direction
                 $finalORDER = $this->finalORDER($finalWHERE, Indi::get()->sort);
 
+                // Get split prop
+                $split = t()->section->splitBy ? t()->section->foreign('splitBy')->alias : null;
+
                 // Get the rowset, fetched using WHERE and ORDER clauses, and with built LIMIT clause,
                 // constructed with usage of Indi::get('limit') and Indi::get('page') params
                 $this->rowset = Indi::trail()->model->{
                 'fetch'. (Indi::trail()->model->treeColumn() ? 'Tree' : 'All')
-                }($finalWHERE, $finalORDER, (int) Indi::get('limit'), (int) Indi::get('page'));
+                }($finalWHERE, $finalORDER, (int) Indi::get('limit'), (int) Indi::get('page'), null, $split);
             }
         }
     }
@@ -509,7 +512,7 @@ class Indi_Controller_Front extends Indi_Controller {
         // Pick values from Indi::post()
         $data = array();
         foreach ($possibleA as $possibleI)
-            if (array_key_exists($possibleI, Indi::post()))
+            if (array_key_exists($possibleI, (array) Indi::post()))
                 $data[$possibleI] = Indi::post($possibleI);
 
         // Unset 'move' key from data, because 'move' is a system field, and it's value will be set up automatically
@@ -607,6 +610,9 @@ class Indi_Controller_Front extends Indi_Controller {
 
             // If $_GET param name not match any existing field - continue
             if (!Indi::trail()->model->fields($key)) continue;
+
+            // 
+            if (is_string($search)) $search = array();
 
             // If $value is not an empty - create an array, and append that array into $search array
             if (strlen($value)) $search[] = array($key => $value);

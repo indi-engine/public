@@ -6,9 +6,9 @@ class Indi_View_Helper_FormNumber {
         $filtered = $attribs;
 		unset($filtered['onchange']);
 		$xhtml = '<input type="text"'
-			   . ' name="' . Indi::view()->escape($name) . '"'
-			   . ' id="' . Indi::view()->escape($name) . '"'
-			   . ' value="' . Indi::view()->escape($value) . '"'
+			   . ' name="' . view()->escape($name) . '"'
+			   . ' id="' . view()->escape($name) . '"'
+			   . ' value="' . view()->escape($value) . '"'
 			   . ' style="width: ' . ($attribs['maxlength']*10) . 'px; text-align: right;" maxlength="' . $attribs['maxlength'] . '" onchange="this.value=number(this.value);' . $attribs['onchange'] . '" /> ' . $attribs['measure'];
         
         return $xhtml;

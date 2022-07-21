@@ -15,12 +15,12 @@ class UsersController extends Indi_Controller_Front{
 				$_SESSION['userId'] = $user->id;
 				$_SESSION['nick'] = $user->title;
 			}
-			Indi::view()->msg = $msg;
+			view()->msg = $msg;
 		} 
 	}
 	public function enteredAction(){
 		if ($_SESSION['userId']) {
-			echo Indi::view()->userEntered();
+			echo view()->userEntered();
 		}
 		die();
 	}

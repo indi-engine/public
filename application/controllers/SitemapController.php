@@ -35,9 +35,9 @@ class SitemapController extends Indi_Controller_Front{
             }
 
         }
-        Indi::view()->tree = $map;
+        view()->tree = $map;
         if(array_key_exists('update', $this->params)) {
-            $xml = Indi::view()->siteMapXml();
+            $xml = view()->siteMapXml();
             i($xml, 'w', 'sitemap.xml');
             die('Файл sitemap.xml обновлен');
         }

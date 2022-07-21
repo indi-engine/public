@@ -13,7 +13,7 @@ class Indi_View_Helper_SiteMapXml {
         ?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><?
 
         // Build the xml
-        foreach(Indi::view()->tree as $item){
+        foreach(view()->tree as $item){
             ?><url><?
                 ?><loc>http://<?=$_SERVER['HTTP_HOST']?><?=$item['href'] == '/index/'? '/' : $item['href']?></loc><?
                 ?><changefreq>daily</changefreq><?

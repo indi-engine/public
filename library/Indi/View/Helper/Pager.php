@@ -30,7 +30,7 @@ class Indi_View_Helper_Pager {
                 $limit /= t()->model->enumset($split)->count();
 
         // Setup total found rows
-        $found = Indi::view()->rowset->found();
+        $found = view()->rowset->found();
 
         // Start output buffering
         ob_start();

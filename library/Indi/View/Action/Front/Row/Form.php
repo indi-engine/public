@@ -9,7 +9,7 @@ class Indi_View_Action_Front_Row_Form extends Indi_View_Action_Front_Row {
         foreach (Indi::trail()->fields as $fieldR)
             if ($fieldR->foreign('elementId')->hidden != 1)
                 if (preg_match('/combo|radio|multicheck/', $fieldR->foreign('elementId')->alias))
-                    Indi::view()->formCombo($fieldR->alias, null, 'extjs');
+                    view()->formCombo($fieldR->alias, null, 'extjs');
 
         // Return buffered output with parent's return-value
         return ob_get_clean() . parent::render();

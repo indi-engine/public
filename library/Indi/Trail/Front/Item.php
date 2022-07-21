@@ -276,7 +276,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
             ], true);
 
             // Feed ``Setup combo data
-            Indi::view()->filterCombo($filter, true);
+            view()->filterCombo($filter, true);
         }
     }
 }

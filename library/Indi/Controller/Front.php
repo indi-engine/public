@@ -138,7 +138,7 @@ class Indi_Controller_Front extends Indi_Controller {
         Indi::trail($this->_routeA)->authLevel2($this);
 
         // Static blocks
-        Indi::view()->blocks = Indi::blocks();
+        view()->blocks = Indi::blocks();
 
         // Adjust trail
         $this->adjustTrail();
@@ -280,13 +280,13 @@ class Indi_Controller_Front extends Indi_Controller {
     public function postDispatch($die = true){
 
         // Setup the menu
-        if (Indi::model('Entity')->fetchRow('`table` = "menu"')) Indi::view()->menu = Indi::model('Menu')->init();
+        if (Indi::model('Entity')->fetchRow('`table` = "menu"')) view()->menu = Indi::model('Menu')->init();
 
         // Get the  filename of view script, that should be rendered
         $view = Indi::trail()->view();
 
         // Render it
-        $out = Indi::view()->render($view);
+        $out = view()->render($view);
 
         // Prepare out
         $out = $this->prepareOut($out);

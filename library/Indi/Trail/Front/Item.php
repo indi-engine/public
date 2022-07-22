@@ -51,7 +51,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
 
             // Setup filters
             if ($sectionR->sectionId)
-                $this->filters = $sectionR->foreign('sectionId')->nested('search', array(
+                $this->filters = $sectionR->foreign('sectionId')->nested('filter', array(
                     'where' => '`toggle` = "y"',
                     'order' => '`move`'
                 ));
@@ -269,8 +269,8 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
         // Foreach field in comma-separated list of fields (or array)
         foreach (ar($fields) as $field) {
 
-            // Create `search` row instance
-            $filter = Indi::model('Search')->createRow([
+            // Create `filter` row instance
+            $filter = m('filter')->new([
                 'fieldId' => $this->fields($field)->id,
                 'consistence' => 2
             ], true);

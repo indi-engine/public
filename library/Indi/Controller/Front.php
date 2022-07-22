@@ -594,16 +594,16 @@ class Indi_Controller_Front extends Indi_Controller {
 
     /**
      * Here we override default method, for ability to pick filter values right from $_GET
-     * rather than from $GET['search']
+     * rather than from $GET['filter']
      *
      * @param string $FROM
-     * @param string $search
+     * @param string $filter
      * @return array
      */
-    public function filtersWHERE($FROM = '', $search = '') {
+    public function filtersWHERE($FROM = '', $filter = '') {
 
-        // If $_GET['search'] is not explicitly given, walk through other $_GET params
-        if (!Indi::get()->search || Indi::get()->search == '[]') foreach (Indi::get() as $key => $value) {
+        // If $_GET['filter'] is not explicitly given, walk through other $_GET params
+        if (!Indi::get()->filter || Indi::get()->filter == '[]') foreach (Indi::get() as $key => $value) {
 
             // If param name is either 'sort', 'limit' or 'page' - continue
             if (in($key, ar('sort,limit,page,keyword'))) continue;
@@ -612,19 +612,19 @@ class Indi_Controller_Front extends Indi_Controller {
             if (!Indi::trail()->model->fields($key)) continue;
 
             // 
-            if (is_string($search)) $search = array();
+            if (is_string($filter)) $filter = array();
 
-            // If $value is not an empty - create an array, and append that array into $search array
+            // If $value is not an empty - create an array, and append that array into $filter array
             if (strlen($value)) {
-                if (!is_array($search)) $search = [];
-                $search []= array($key => $value);
+                if (!is_array($filter)) $filter = [];
+                $filter []= array($key => $value);
             }
         }
 
         // If some $_GET params can be used as filters - use them
-        if ($search) $search = json_encode($search);
+        if ($filter) $filter = json_encode($filter);
 
         // Call parent
-        return parent::filtersWHERE($FROM, $search);
+        return parent::filtersWHERE($FROM, $filter);
     }
 }

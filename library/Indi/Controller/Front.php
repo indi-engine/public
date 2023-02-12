@@ -29,7 +29,7 @@ class Indi_Controller_Front extends Indi_Controller {
                 `s`.`toggle` = "y" AS `sectionToggle`,
                 `a`.`id` > 0 AS `actionExists`,
                 `sa`.`id` > 0 AS `section2actionExists`,
-                `s`.`fsectionId` AS `sectionId`,
+                IFNULL(`s`.`fsectionId`, 0) AS `sectionId`,
                 `a`.`alias` AS `actionAlias`
             FROM `fsection` `s`
                LEFT JOIN `faction` `a` ON (`a`.`alias` = IF(`s`.`type` = "s" AND "' . $action . '" = "index", `s`.`index`, "' . $action . '"))
@@ -62,7 +62,7 @@ class Indi_Controller_Front extends Indi_Controller {
 
             // Navigate through parent sections up to the root
             while ($parent = Indi::db()->query('
-                SELECT `fsectionId`, `toggle` FROM `fsection` WHERE `id` = "' . $parent['fsectionId'] . '" LIMIT 1
+                SELECT IFNULL(`fsectionId`, 0), `toggle` FROM `fsection` WHERE `id` = "' . $parent['fsectionId'] . '" LIMIT 1
             ')->fetch()) {
 
                 // If any of parent sections if switched off - setup an error and break the loop

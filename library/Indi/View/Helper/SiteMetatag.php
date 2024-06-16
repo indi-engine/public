@@ -111,9 +111,9 @@ class Indi_View_Helper_SiteMetatag {
         }
 
         // Append string, that should be constantly presented within metatag contents
-        if ($const = Indi::ini('metatag')->const) $outA[] = $const;
+        if ($const = Indi::ini('metatag')->const ?? '') $outA[] = $const;
 
         // Return imploded items
-        return self::$_out[$tag] = str_replace('"', '&quot;', implode(Indi::ini('metatag')->delim, $outA));
+        return self::$_out[$tag] = str_replace('"', '&quot;', implode(Indi::ini('metatag')->delim ?? ', ', $outA));
     }
 }

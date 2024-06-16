@@ -33,7 +33,7 @@ class Menu extends Indi_Db_Table {
         foreach ($rowset as $row) {
             
             // Ensure that items having `toggle` = 'y' will be skipped in case if their parents have `toggle` = 'n'
-            if ($row->$toggle == 'n' || $off[$row->menuId]) {
+            if ($row->$toggle == 'n' || ($off[$row->menuId] ?? 0)) {
                 
                 // Remember
                 $off[$row->id] = true;

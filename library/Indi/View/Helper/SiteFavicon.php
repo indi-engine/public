@@ -3,7 +3,7 @@ class Indi_View_Helper_SiteFavicon {
     public function siteFavicon() {
 
         // Get the favicon file location
-        $rel = view()->blocks['favicon-path'];
+        $rel = view()->blocks['favicon-path'] ?? '';
 
         // Get the favicon file absolute path
         $abs = DOC . $rel;

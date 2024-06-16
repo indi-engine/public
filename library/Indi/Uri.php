@@ -73,7 +73,7 @@ class Indi_Uri extends Indi_Uri_Base {
                     );
 
                     // Force tree check
-                    if ($staticpageR) $where[] = '(`staticpageId` = "' . $staticpageR->id . '" OR `alias` = "404")';
+                    if ($staticpageR ?? 0) $where[] = '(`staticpageId` = "' . $staticpageR->id . '" OR `alias` = "404")';
 
                     // Get the Staticpage_Row object, related either to appropriate static page, or '404'
                     // static page, which will be used in case if appropriate static page won't be found
@@ -115,7 +115,7 @@ class Indi_Uri extends Indi_Uri_Base {
         }
 
 
-        if ($notFound) {
+        if ($notFound ?? 0) {
             header('HTTP/1.1 404 Not Found');
             if (!$staticpageR->id) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
         } else {
@@ -226,7 +226,7 @@ class Indi_Uri extends Indi_Uri_Base {
         $db = Indi::db();
         $url = parse_url($seo);
         $aim = explode('/', trim($url['path'], '/'));
-        if ($aim[count($aim)-1] == 'noseo') return $seo;
+        if (($aim[count($aim)-1] ?? null) == 'noseo') return $seo;
         if (count($aim) > 1) {
 
             if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
@@ -246,7 +246,7 @@ class Indi_Uri extends Indi_Uri_Base {
 			  AND IF(`sa`.`rename`,`sa`.`alias` = "' . $aim[1] . '", `a`.`alias` = "' . $aim[1] . '")';
 
             $r = $db->query($sql)->fetchAll();
-            $saId = $r[0]['id'];
+            $saId = $r[0]['id'] ?? null;
             $sql = '
 			SELECT
 			  `u`.*,
@@ -292,8 +292,8 @@ class Indi_Uri extends Indi_Uri_Base {
             } else {
                 $models = array();
                 $sys = array($aim[0]);
-                $sys[] = $parts[0]['alias'] ? $parts[0]['alias'] : ($parts[0]['rename'] ? $parts[0]['originalAlias'] : $aim[1]);
-                $alias = $parts[0]['alias'] ? $aim[1] : $aim[2];
+                $sys[] = ($parts[0]['alias'] ?? 0) ? $parts[0]['alias'] : ($parts[0]['rename'] ? $parts[0]['originalAlias'] : $aim[1]);
+                $alias = ($parts[0]['alias'] ?? 0) ? $aim[1] : $aim[2];
 
                 if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_\-\.]*$/', $aim[1])) return '/' . preg_replace('/^[0-9]+/', '', grs()) . '/';
 
@@ -305,7 +305,7 @@ class Indi_Uri extends Indi_Uri_Base {
                 $lastId = 0;
                 $shift = 0;
                 for ($i = 0; $i < count($parts); $i++) {
-                    if (isset($aim[$i - 1 + ($parts[0]['alias'] ? 2 : 3) - $shift]) && $component = $models[$parts[$i]['entityId']]->fetchRow(
+                    if (isset($aim[$i - 1 + (($parts[0]['alias'] ?? 0) ? 2 : 3) - $shift]) && $component = $models[$parts[$i]['entityId']]->fetchRow(
                         (preg_match('/-([0-9]+)$/', $alias)
                             ? '(`alias` = "' . $alias . '" OR `id` = "' . array_pop(explode('-', $alias)) . '")'
                             : '`alias` = "' . $alias . '"') . $where)
@@ -313,7 +313,7 @@ class Indi_Uri extends Indi_Uri_Base {
 //					echo '`alias` = "' . $alias . '"' . $where . '<br>' . "\n";
                         $lastId = $component->id;
 
-                        if ($i == ($parts[0]['alias'] && !$parts[0]['blink'] ? count($parts) : count($parts) - 1)) {
+                        if ($i == (($parts[0]['alias'] ?? 0) && !$parts[0]['blink'] ? count($parts) : count($parts) - 1)) {
 //					if ($i == ($parts[0]['alias'] ? count($parts) : count($parts) - 1)) {
                             $sys[] = $parts[$i]['prefix'] . '/' . $component->id;
                             break;
@@ -336,10 +336,10 @@ class Indi_Uri extends Indi_Uri_Base {
                     }
 
                 }
-                for ($i = ($parts[0]['alias'] ? 0 : 1)+ 1 + count($parts); $i < count($aim); $i++) $sys[] = $aim[$i];
+                for ($i = (($parts[0]['alias'] ?? 0) ? 0 : 1)+ 1 + count($parts); $i < count($aim); $i++) $sys[] = $aim[$i];
                 $sys = '/' . implode('/', $sys) . '/';
-                if ($url['query']) $sys .= '?' . $url['query'];
-                if ($url['fragment']) $sys .= '#' . $url['fragment'];
+                if ($url['query'] ?? 0) $sys .= '?' . $url['query'];
+                if ($url['fragment'] ?? 0) $sys .= '#' . $url['fragment'];
             }
         } else {
             $sys = $seo;
@@ -359,7 +359,8 @@ class Indi_Uri extends Indi_Uri_Base {
 
             if (STD) $uri[$i] = preg_replace('~^' . preg_quote(STD, '~') . '~', '', $uri[$i]);
 
-            list($empty, $section, $action, $prefix) = explode('/', $uri[$i]);
+            $e = explode('/', $uri[$i]); $empty = $e[0]; $section = $e[1]; $action = $e[2]; $prefix = $e[3] ?? '';
+
             $group = '/' . $section . '/' . $action . '/';
             if (!in_array($group, $groups)) $groups[] = $group;
         }
@@ -391,7 +392,7 @@ class Indi_Uri extends Indi_Uri_Base {
             $r[$rs[$i]['concat']][] = $rs[$i];
         }
         for ($i = 0; $i < count($uri); $i++) {
-            list($empty, $section, $action, $prefix) = explode('/', $uri[$i]);
+            $e = explode('/', $uri[$i]); $empty = $e[0]; $section = $e[1]; $action = $e[2]; $prefix = $e[3] ?? '';
             $group = '/' . $section . '/' . $action . '/';
             if (in_array($group, $found)) $furi[] = $uri[$i];
         }

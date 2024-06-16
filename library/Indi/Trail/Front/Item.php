@@ -142,7 +142,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 $majorWHERE = $this->section->compiled('where');
 
             // If we have a clause for row identification
-            if ($majorWHERE) {
+            if ($majorWHERE ?? 0) {
 
                 // Get primary WHERE clause
                 $where = Indi_Trail_Front::$controller->primaryWHERE();
@@ -192,7 +192,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                     if ($this->model->fields($connector)) {
 
                         // If connection value is presented in session special place
-                        if ($value = $_SESSION['indi']['front']['trail']['parentId'][Indi::trail($i)->section->id])
+                        if ($value = $_SESSION['indi']['front']['trail']['parentId'][Indi::trail($i)->section->id] ?? 0)
 
                             // Assign it
                             $this->row->$connector = $value;
@@ -226,7 +226,7 @@ class Indi_Trail_Front_Item extends Indi_Trail_Item {
                 $id = Indi::trail()->action->maintenance == 'rs' && $index == 1
                     ? Indi::uri('id')
                     : (Indi::trail($index-1)->model->fields($connector)
-                        ? Indi::trail($index-1)->row->$connector
+                        ? (Indi::trail($index-1)->row->$connector ?? null)
                         : $_SESSION['indi']['front']['trail']['parentId'][Indi::trail($index-1)->section->id]);
 
                 // Add main item to WHERE clause stack

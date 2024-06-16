@@ -71,7 +71,7 @@ class Indi_Controller_Front extends Indi_Controller {
                     break;
 
                     // Else push new item in $this->_routeA stack
-                } else if ($parent['fsectionId']) $this->_routeA[] = $parent['fsectionId'];
+                } else if ($parent['fsectionId'] ?? 0) $this->_routeA[] = $parent['fsectionId'];
 
                 // Else stop loop, as $parent['sectionId'] = 0, so there is no sense to find a section with such an `id`
                 else break;
@@ -79,7 +79,7 @@ class Indi_Controller_Front extends Indi_Controller {
         }
 
         // If $error was set - return error, else
-        if ($error) return $error; else {
+        if ($error ?? 0) return $error; else {
 
             // Update uri's action
             Indi::uri()->action = $data['actionAlias'];
@@ -296,7 +296,7 @@ class Indi_Controller_Front extends Indi_Controller {
 
             // If we are here because user, that is not currently signed-in
             // was trying to reach something allowed only to signed-in users
-            if ($_SESSION['authRequiredRequest']['code'] == 401) {
+            if (($_SESSION['authRequiredRequest']['code'] ?? 0) == 401) {
 
                 // Unset unauthorised flag, as it's aim was to
                 // keep in mind the fact of an user's unauthorized try
@@ -475,7 +475,7 @@ class Indi_Controller_Front extends Indi_Controller {
                 if (isset(Indi::get()->page) == false || ! (int) Indi::get()->page) Indi::get()->page = 1;
 
                 // Get final ORDER clause, built regarding column name and sorting direction
-                $finalORDER = $this->finalORDER($finalWHERE, Indi::get()->sort);
+                $finalORDER = $this->finalORDER($finalWHERE, Indi::get()->sort ?? null);
 
                 // Get split prop
                 $split = t()->section->splitBy ? t()->section->foreign('splitBy')->alias : null;
@@ -603,7 +603,7 @@ class Indi_Controller_Front extends Indi_Controller {
     public function filtersWHERE($FROM = '', $filter = '') {
 
         // If $_GET['filter'] is not explicitly given, walk through other $_GET params
-        if (!Indi::get()->filter || Indi::get()->filter == '[]') foreach (Indi::get() as $key => $value) {
+        if (!(Indi::get()->filter ?? 0) || Indi::get()->filter == '[]') foreach (Indi::get() as $key => $value) {
 
             // If param name is either 'sort', 'limit' or 'page' - continue
             if (in($key, ar('sort,limit,page,keyword'))) continue;

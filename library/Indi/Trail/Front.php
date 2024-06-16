@@ -35,6 +35,7 @@ class Indi_Trail_Front {
         $sectionRs->nested('fsection2faction', array('foreign' => 'factionId'));
 
         // Setup initial set of properties
+        $i = 0;
         foreach ($sectionRs as $sectionR)
             self::$items[] = new Indi_Trail_Front_Item($sectionR, $sectionRs->count() - ++$i);
 
@@ -63,10 +64,10 @@ class Indi_Trail_Front {
             }
 
             // If $id was defined using any of both methods
-            if ($id) {
+            if ($id ?? 0) {
 
                 // If there is no info about nesting yet, we create an array, where it will be stored
-                if (!is_array($_SESSION['indi']['front']['trail']['parentId']))
+                if (!is_array($_SESSION['indi']['front']['trail']['parentId'] ?? 0))
                     $_SESSION['indi']['front']['trail']['parentId'] = array();
 
                 // Save id in session
@@ -123,7 +124,7 @@ class Indi_Trail_Front {
      * @return mixed
      */
     public function item($stepsUp = 0) {
-        return self::$items[count(self::$items) - 1 - $stepsUp];
+        return self::$items[count(self::$items) - 1 - $stepsUp] ?? null;
     }
 
     /**

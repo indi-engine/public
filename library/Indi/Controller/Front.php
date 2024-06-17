@@ -296,7 +296,7 @@ class Indi_Controller_Front extends Indi_Controller {
 
             // If we are here because user, that is not currently signed-in
             // was trying to reach something allowed only to signed-in users
-            if (($_SESSION['authRequiredRequest']['code'] ?? 0) == 401) {
+            if ((int) ($_SESSION['authRequiredRequest']['code'] ?? 0) === 401) {
 
                 // Unset unauthorised flag, as it's aim was to
                 // keep in mind the fact of an user's unauthorized try

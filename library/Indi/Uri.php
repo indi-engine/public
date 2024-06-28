@@ -193,7 +193,7 @@ class Indi_Uri extends Indi_Uri_Base {
         $GLOBALS['INITIAL_URI'] = $_SERVER['REQUEST_URI'];
 
         // If seo uri mode is enabled
-        if (Indi::ini()->general->seoUri) {
+        if (ini()->general->seoUri ?? 0) {
 
             // Convert existing request uri to non-seo structure
             $_SERVER['REQUEST_URI'] = $this->seo2sys($_SERVER['REQUEST_URI']);
@@ -226,6 +226,7 @@ class Indi_Uri extends Indi_Uri_Base {
         $db = Indi::db();
         $url = parse_url($seo);
         $aim = explode('/', trim($url['path'], '/'));
+        if ($url === false) Indi::log('seo-not-parseable', $seo, true);
         if (($aim[count($aim)-1] ?? null) == 'noseo') return $seo;
         if (count($aim) > 1) {
 

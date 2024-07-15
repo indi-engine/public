@@ -270,7 +270,7 @@ class Indi_Controller_Front extends Indi_Controller {
             $whereS = count($where) ? implode(' AND ', $where) : null;
 
             // Set a hash
-            Indi::trail()->section->primaryHash = substr(md5($whereS), 0, 10);
+            Indi::trail()->section->primaryHash = substr(md5($whereS ?? ''), 0, 10);
         }
 
         // Return primary WHERE clauses stack

@@ -94,7 +94,7 @@ class Indi_Trail_Front {
 
         // If 'id' param is mentioned in uri, but it's value either not specified,
         // or does not match allowed format - setup an error
-        if (array_key_exists('id', (array) Indi::uri()) && !preg_match('/^[1-9][0-9]*$/', Indi::uri()->id))
+        if (property_exists(uri(), 'id') && !preg_match('/^[1-9][0-9]*$/', uri()->id ?? ''))
             $error = I_URI_ERROR_ID_FORMAT;
 
         // Else setup row for each trail item, or setup an access error

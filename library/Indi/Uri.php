@@ -82,10 +82,10 @@ class Indi_Uri extends Indi_Uri_Base {
                     // Setup new uri params
                     Indi::uri()->section = 'static';
                     Indi::uri()->action = 'details';
-                    Indi::uri()->id = $staticpageR->id;
+                    Indi::uri()->id = $staticpageR->id ?? 0;
 
                     // If static page is '404' setup $notFound flag as boolean true
-                    if ($staticpageR->alias == '404' || !$staticpageR->id) {
+                    if (!$staticpageR || $staticpageR->alias == '404') {
                         $notFound = true;
                         break;
                     }
@@ -107,7 +107,7 @@ class Indi_Uri extends Indi_Uri_Base {
                 // Setup new uri params
                 Indi::uri()->section = 'static';
                 Indi::uri()->action = 'details';
-                Indi::uri()->id = $staticpageR->id;
+                Indi::uri()->id = $staticpageR->id ?? 0;
 
                 // Setup $notFound flag as boolean true
                 $notFound = true;
@@ -117,7 +117,7 @@ class Indi_Uri extends Indi_Uri_Base {
 
         if ($notFound ?? 0) {
             header('HTTP/1.1 404 Not Found');
-            if (!$staticpageR->id) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
+            if (!$staticpageR) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
         } else {
             $this->trailingSlash();
         }

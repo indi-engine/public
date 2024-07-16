@@ -97,7 +97,7 @@ class Indi_Controller_Front extends Indi_Controller {
         // Setup a new uri params, related to '404 Not Found' page
         Indi::uri()->section = 'static';
         Indi::uri()->action = 'details';
-        Indi::uri()->id = Indi::model('Staticpage')->fetchRow('`alias` = "404"')->id;
+        Indi::uri()->id = Indi::model('Staticpage')->fetchRow('`alias` = "404"')->id ?? 0;
         Indi::uri()->build();
 
         // Setup 404 response header

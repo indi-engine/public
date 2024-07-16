@@ -61,7 +61,7 @@ class Menu extends Indi_Db_Table {
         }
 
         // Mark parent menu items as active
-        while (array_key_exists($upperID, $idA))
+        if ($upperID ?? 0) while (array_key_exists($upperID, $idA))
            $upperID = $rowset->at($idA[$upperID])->assign(array('active' => true))->menuId;
 
         // Exclude turned off items, or items that are turned on but are nested under turned off parents

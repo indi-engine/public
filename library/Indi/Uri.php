@@ -114,10 +114,14 @@ class Indi_Uri extends Indi_Uri_Base {
             }
         }
 
+        // If we're already reached 'not found' page, but it doesn't exists - setup $notFound flag
+        if (!isset($notFound) && uri()->section === 'static' && uri()->action === 'details' && uri()->id === 0) {
+            $notFound = true;
+        }
 
         if ($notFound ?? 0) {
             header('HTTP/1.1 404 Not Found');
-            if (!$staticpageR) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
+            if (!isset($staticpageR)) die(I_NO404_FOUND); else if ($fsectionR->toggle == 'n') die(I_FSECTION_STATIC_INACTIVE);
         } else {
             $this->trailingSlash();
         }

@@ -229,7 +229,7 @@ class Indi_Uri extends Indi_Uri_Base {
     public function seo2sys($seo){
         $db = Indi::db();
         $url = parse_url($seo);
-        $aim = explode('/', trim($url['path'], '/'));
+        $aim = explode('/', trim($url['path'] ?? '', '/'));
         if ($url === false) Indi::log('seo-not-parseable', $seo, true);
         if (($aim[count($aim)-1] ?? null) == 'noseo') return $seo;
         if (count($aim) > 1) {
